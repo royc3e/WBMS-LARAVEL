@@ -3,7 +3,7 @@
         ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'dashboard'],
         ['label' => 'Meter Reading', 'route' => 'meter-readings.index', 'icon' => 'document-chart-bar'],
         ['label' => 'Consumers', 'route' => 'consumers.index', 'icon' => 'user-group'],
-        ['label' => 'Billing', 'route' => 'billings.index', 'icon' => 'currency-dollar'],
+        ['label' => 'Billing & Payments', 'route' => 'billings.index', 'icon' => 'currency-dollar'],
         ['label' => 'User Management', 'route' => 'users.index', 'icon' => 'cog-6-tooth'],
         ['label' => 'Reports', 'route' => 'reports.index', 'icon' => 'chart-bar'],
     ];

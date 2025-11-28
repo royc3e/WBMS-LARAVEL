@@ -4,7 +4,7 @@
     @method('PUT')
 @endif
 
-<div class="bg-white dark:bg-slate-800 shadow sm:rounded-lg">
+<div class="bg-white dark:bg-slate-800 shadow-lg sm:rounded-xl overflow-hidden">
     <div class="px-4 py-5 sm:p-6">
         <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
             {{ isset($consumer) ? 'Edit Consumer' : 'Add New Consumer' }}
@@ -13,23 +13,23 @@
             Fill in the details below to {{ isset($consumer) ? 'update' : 'create' }} a consumer.
         </p>
 
-        <div class="mt-6 grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+        <div class="mt-6 grid grid-cols-1 gap-y-8 gap-x-6 sm:grid-cols-6 bg-white dark:bg-slate-800 p-6 rounded-lg">
             <!-- Account Information -->
             <div class="sm:col-span-6 border-b border-gray-200 dark:border-slate-700 pb-6">
-                <h4 class="text-md font-medium text-gray-900 dark:text-white">Account Information</h4>
+                <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Account Information</h4>
             </div>
 
             <div class="sm:col-span-2">
-                <label for="account_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="account_number" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Account Number
                 </label>
-                <div class="mt-1">
+                <div class="mt-1.5">
                     <input
                         type="text"
                         name="account_number"
                         id="account_number"
                         value="{{ old('account_number', $consumer->account_number ?? '') }}"
-                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-700 rounded-md dark:bg-slate-800 dark:text-white"
+                        class="shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base sm:text-lg border-2 border-gray-300 dark:border-slate-500 rounded-lg bg-white dark:bg-slate-700/70 dark:text-white p-3"
                         placeholder="Leave blank to auto-generate"
                     >
                     @error('account_number')
@@ -39,14 +39,14 @@
             </div>
 
             <div class="sm:col-span-2">
-                <label for="connection_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="connection_type" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Connection Type
                 </label>
-                <div class="mt-1">
+                <div class="mt-1.5">
                     <select
                         id="connection_type"
                         name="connection_type"
-                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-700 rounded-md dark:bg-slate-800 dark:text-white"
+                        class="shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base sm:text-lg border-2 border-gray-300 dark:border-slate-500 rounded-lg bg-white dark:bg-slate-700/70 dark:text-white p-3"
                     >
                         @foreach([
                             'residential' => 'Residential',
@@ -66,14 +66,14 @@
             </div>
 
             <div class="sm:col-span-2">
-                <label for="connection_status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="connection_status" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Status
                 </label>
-                <div class="mt-1">
+                <div class="mt-1.5">
                     <select
                         id="connection_status"
                         name="connection_status"
-                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-700 rounded-md dark:bg-slate-800 dark:text-white"
+                        class="shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base sm:text-lg border-2 border-gray-300 dark:border-slate-500 rounded-lg bg-white dark:bg-slate-700/70 dark:text-white p-3"
                     >
                         @foreach([
                             'active' => 'Active',
@@ -94,20 +94,20 @@
 
             <!-- Personal Information -->
             <div class="sm:col-span-6 border-b border-gray-200 dark:border-slate-700 pb-6 mt-6">
-                <h4 class="text-md font-medium text-gray-900 dark:text-white">Personal Information</h4>
+                <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Personal Information</h4>
             </div>
 
             <div class="sm:col-span-2">
-                <label for="first_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="first_name" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                     First Name *
                 </label>
-                <div class="mt-1">
+                <div class="mt-1.5">
                     <input
                         type="text"
                         name="first_name"
                         id="first_name"
                         value="{{ old('first_name', $consumer->first_name ?? '') }}"
-                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-700 rounded-md dark:bg-slate-800 dark:text-white"
+                        class="shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base sm:text-lg border-2 border-gray-300 dark:border-slate-500 rounded-lg bg-white dark:bg-slate-700/70 dark:text-white p-3"
                         required
                     >
                     @error('first_name')
@@ -117,16 +117,16 @@
             </div>
 
             <div class="sm:col-span-2">
-                <label for="middle_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="middle_name" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Middle Name
                 </label>
-                <div class="mt-1">
+                <div class="mt-1.5">
                     <input
                         type="text"
                         name="middle_name"
                         id="middle_name"
                         value="{{ old('middle_name', $consumer->middle_name ?? '') }}"
-                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-700 rounded-md dark:bg-slate-800 dark:text-white"
+                        class="shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base sm:text-lg border-2 border-gray-300 dark:border-slate-500 rounded-lg bg-white dark:bg-slate-700/70 dark:text-white p-3"
                     >
                     @error('middle_name')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -135,16 +135,16 @@
             </div>
 
             <div class="sm:col-span-2">
-                <label for="last_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="last_name" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Last Name *
                 </label>
-                <div class="mt-1">
+                <div class="mt-1.5">
                     <input
                         type="text"
                         name="last_name"
                         id="last_name"
                         value="{{ old('last_name', $consumer->last_name ?? '') }}"
-                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-700 rounded-md dark:bg-slate-800 dark:text-white"
+                        class="shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base sm:text-lg border-2 border-gray-300 dark:border-slate-500 rounded-lg bg-white dark:bg-slate-700/70 dark:text-white p-3"
                         required
                     >
                     @error('last_name')
@@ -154,16 +154,16 @@
             </div>
 
             <div class="sm:col-span-3">
-                <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="email" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Email Address
                 </label>
-                <div class="mt-1">
+                <div class="mt-1.5">
                     <input
                         type="email"
                         name="email"
                         id="email"
                         value="{{ old('email', $consumer->email ?? '') }}"
-                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-700 rounded-md dark:bg-slate-800 dark:text-white"
+                        class="shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base sm:text-lg border-2 border-gray-300 dark:border-slate-500 rounded-lg bg-white dark:bg-slate-700/70 dark:text-white p-3"
                     >
                     @error('email')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -172,16 +172,16 @@
             </div>
 
             <div class="sm:col-span-3">
-                <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="phone" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Phone Number
                 </label>
-                <div class="mt-1">
+                <div class="mt-1.5">
                     <input
                         type="tel"
                         name="phone"
                         id="phone"
                         value="{{ old('phone', $consumer->phone ?? '') }}"
-                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-700 rounded-md dark:bg-slate-800 dark:text-white"
+                        class="shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base sm:text-lg border-2 border-gray-300 dark:border-slate-500 rounded-lg bg-white dark:bg-slate-700/70 dark:text-white p-3"
                     >
                     @error('phone')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -191,20 +191,20 @@
 
             <!-- Address Information -->
             <div class="sm:col-span-6 border-b border-gray-200 dark:border-slate-700 pb-6 mt-6">
-                <h4 class="text-md font-medium text-gray-900 dark:text-white">Address Information</h4>
+                <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Address Information</h4>
             </div>
 
             <div class="sm:col-span-4">
-                <label for="address_line_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="address_line_1" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Street Address *
                 </label>
-                <div class="mt-1">
+                <div class="mt-1.5">
                     <input
                         type="text"
                         name="address_line_1"
                         id="address_line_1"
                         value="{{ old('address_line_1', $consumer->address_line_1 ?? '') }}"
-                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-700 rounded-md dark:bg-slate-800 dark:text-white"
+                        class="shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base sm:text-lg border-2 border-gray-300 dark:border-slate-500 rounded-lg bg-white dark:bg-slate-700/70 dark:text-white p-3"
                         required
                     >
                     @error('address_line_1')
@@ -214,16 +214,16 @@
             </div>
 
             <div class="sm:col-span-2">
-                <label for="address_line_2" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="address_line_2" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Apt/Suite/Unit
                 </label>
-                <div class="mt-1">
+                <div class="mt-1.5">
                     <input
                         type="text"
                         name="address_line_2"
                         id="address_line_2"
                         value="{{ old('address_line_2', $consumer->address_line_2 ?? '') }}"
-                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-700 rounded-md dark:bg-slate-800 dark:text-white"
+                        class="shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base sm:text-lg border-2 border-gray-300 dark:border-slate-500 rounded-lg bg-white dark:bg-slate-700/70 dark:text-white p-3"
                     >
                     @error('address_line_2')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -232,16 +232,16 @@
             </div>
 
             <div class="sm:col-span-2">
-                <label for="city" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="city" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                     City *
                 </label>
-                <div class="mt-1">
+                <div class="mt-1.5">
                     <input
                         type="text"
                         name="city"
                         id="city"
                         value="{{ old('city', $consumer->city ?? '') }}"
-                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-700 rounded-md dark:bg-slate-800 dark:text-white"
+                        class="shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base sm:text-lg border-2 border-gray-300 dark:border-slate-500 rounded-lg bg-white dark:bg-slate-700/70 dark:text-white p-3"
                         required
                     >
                     @error('city')
@@ -251,16 +251,16 @@
             </div>
 
             <div class="sm:col-span-2">
-                <label for="state" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="state" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                     State/Province *
                 </label>
-                <div class="mt-1">
+                <div class="mt-1.5">
                     <input
                         type="text"
                         name="state"
                         id="state"
                         value="{{ old('state', $consumer->state ?? '') }}"
-                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-700 rounded-md dark:bg-slate-800 dark:text-white"
+                        class="shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base sm:text-lg border-2 border-gray-300 dark:border-slate-500 rounded-lg bg-white dark:bg-slate-700/70 dark:text-white p-3"
                         required
                     >
                     @error('state')
@@ -270,16 +270,16 @@
             </div>
 
             <div class="sm:col-span-2">
-                <label for="postal_code" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="postal_code" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                     ZIP/Postal Code *
                 </label>
-                <div class="mt-1">
+                <div class="mt-1.5">
                     <input
                         type="text"
                         name="postal_code"
                         id="postal_code"
                         value="{{ old('postal_code', $consumer->postal_code ?? '') }}"
-                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-700 rounded-md dark:bg-slate-800 dark:text-white"
+                        class="shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base sm:text-lg border-2 border-gray-300 dark:border-slate-500 rounded-lg bg-white dark:bg-slate-700/70 dark:text-white p-3"
                         required
                     >
                     @error('postal_code')
@@ -290,20 +290,20 @@
 
             <!-- Connection Information -->
             <div class="sm:col-span-6 border-b border-gray-200 dark:border-slate-700 pb-6 mt-6">
-                <h4 class="text-md font-medium text-gray-900 dark:text-white">Connection Information</h4>
+                <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Connection Information</h4>
             </div>
 
             <div class="sm:col-span-2">
-                <label for="meter_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="meter_number" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Meter Number
                 </label>
-                <div class="mt-1">
+                <div class="mt-1.5">
                     <input
                         type="text"
                         name="meter_number"
                         id="meter_number"
                         value="{{ old('meter_number', $consumer->meter_number ?? '') }}"
-                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-700 rounded-md dark:bg-slate-800 dark:text-white"
+                        class="shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base sm:text-lg border-2 border-gray-300 dark:border-slate-500 rounded-lg bg-white dark:bg-slate-700/70 dark:text-white p-3"
                     >
                     @error('meter_number')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -312,16 +312,16 @@
             </div>
 
             <div class="sm:col-span-2">
-                <label for="connection_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="connection_date" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Connection Date *
                 </label>
-                <div class="mt-1">
+                <div class="mt-1.5">
                     <input
                         type="date"
                         name="connection_date"
                         id="connection_date"
                         value="{{ old('connection_date', isset($consumer->connection_date) ? \Carbon\Carbon::parse($consumer->connection_date)->format('Y-m-d') : now()->format('Y-m-d')) }}"
-                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-700 rounded-md dark:bg-slate-800 dark:text-white"
+                        class="shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base sm:text-lg border-2 border-gray-300 dark:border-slate-500 rounded-lg bg-white dark:bg-slate-700/70 dark:text-white p-3"
                         required
                     >
                     @error('connection_date')
@@ -331,15 +331,15 @@
             </div>
 
             <div class="sm:col-span-6">
-                <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label for="notes" class="block text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Notes
                 </label>
-                <div class="mt-1">
+                <div class="mt-1.5">
                     <textarea
                         id="notes"
                         name="notes"
                         rows="3"
-                        class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 dark:border-slate-700 rounded-md dark:bg-slate-800 dark:text-white"
+                        class="shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full text-base sm:text-lg border-2 border-gray-300 dark:border-slate-500 rounded-lg bg-white dark:bg-slate-700/70 dark:text-white p-3"
                     >{{ old('notes', $consumer->notes ?? '') }}</textarea>
                     @error('notes')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
