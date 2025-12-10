@@ -17,10 +17,27 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
     protected $fillable = [
         'name',
         'email',
         'password',
+        'role',
+    ];
+
+    /**
+     * The possible user roles.
+     *
+     * @var array
+     */
+    public const ROLES = [
+        'admin' => 'Administrator',
+        'staff' => 'Staff',
+        'reader' => 'Meter Reader',
     ];
 
     /**
@@ -44,5 +61,35 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Check if user has admin role.
+     *
+     * @return bool
+     */
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Check if user has staff role.
+     *
+     * @return bool
+     */
+    public function isStaff()
+    {
+        return $this->role === 'staff';
+    }
+
+    /**
+     * Check if user has meter reader role.
+     *
+     * @return bool
+     */
+    public function isReader()
+    {
+        return $this->role === 'reader';
     }
 }

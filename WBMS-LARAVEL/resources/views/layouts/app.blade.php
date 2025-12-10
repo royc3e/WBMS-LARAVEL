@@ -32,7 +32,7 @@
             <aside
                 x-cloak
                 :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
-                class="fixed inset-y-0 z-40 flex w-72 flex-col bg-[#0f172a] px-4 py-6 text-white shadow-2xl transition duration-200 ease-in-out lg:fixed lg:inset-y-0 lg:left-0 lg:overflow-y-auto"
+                class="fixed inset-y-0 z-40 flex w-72 flex-col bg-[#0f172a] px-3 py-4 text-white shadow-2xl transition duration-200 ease-in-out lg:fixed lg:inset-y-0 lg:left-0 lg:overflow-y-auto"
             >
                 @include('layouts.navigation')
             </aside>

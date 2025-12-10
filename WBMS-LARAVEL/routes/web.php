@@ -20,8 +20,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Consumer routes are now in consumers.php
     Route::view('/rates-charges', 'dashboard')->name('rates.index');
     Route::view('/billings', 'dashboard')->name('billings.index');
-    // Payments route is removed as requested
-    Route::view('/user-management', 'dashboard')->name('users.index');
+    // User Management Routes
+    Route::resource('users', \App\Http\Controllers\UserController::class)->except(['show']);
     Route::view('/reports', 'dashboard')->name('reports.index');
 });
 
