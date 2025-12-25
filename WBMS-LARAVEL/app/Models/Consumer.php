@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Consumer extends Model
 {
@@ -71,5 +72,36 @@ class Consumer extends Model
     public function scopeActive($query)
     {
         return $query->where('connection_status', 'active');
+    }
+
+    /**
+     * Get the billings for the consumer.
+     */
+    public function billings(): HasMany
+    {
+        return $this->hasMany(Billing::class);
+    }
+
+    /**
+     * Get the active billings for the consumer.
+     */
+    public function activeBillings()
+    {
+        return $this->billings()
+            ->whereIn('status', ['pending', 'overdue'])
+            ->orderBy('due_date');
+    }
+
+    /**
+     * Get the payment history for the consumer.
+     */
+    public function paymentHistory()
+    {
+        return $this->hasManyThrough(
+            Payment::class,
+            Billing::class,
+            'consumer_id',
+            'billing_id'
+        )->latest('payment_date');
     }
 }

@@ -196,7 +196,7 @@
 
             <div class="sm:col-span-4">
                 <label for="address_line_1" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Street Address *
+                    Street Address/Purok Name *
                 </label>
                 <div class="mt-1">
                     <input
