@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WBMS - Billing Page Wireframe</title>
+    <link rel="stylesheet" href="billing-page.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+                </svg>
+                <span class="system-name">Water Billing Management System</span>
+            </div>
+            <h1 class="page-title">Billing Page</h1>
+            <div class="user-profile">
+                <svg class="profile-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                </svg>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Consumer Search Section -->
+        <section class="card search-section">
+            <h2 class="section-title">Consumer Search</h2>
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Enter Consumer ID or Name">
+                <button class="btn btn-primary search-btn">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                    Search
+                </button>
+            </div>
+        </section>
+
+        <!-- Consumer Information Card -->
+        <section class="card consumer-info">
+            <h2 class="section-title">Consumer Information</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Name:</span>
+                    <span class="info-value">Juan Dela Cruz</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Account Number:</span>
+                    <span class="info-value">WB-2024-001</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Address:</span>
+                    <span class="info-value">123 Main Street, Barangay San Jose, City</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Account Status:</span>
+                    <span class="badge badge-success">Active</span>
+                </div>
+                <div class="info-item outstanding-balance">
+                    <span class="info-label">Outstanding Balance:</span>
+                    <span class="balance-amount">₱1,250.00</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Payment Processing Section -->
+        <section class="card payment-section">
+            <h2 class="section-title">Payment Processing</h2>
+            <button class="btn btn-primary add-payment-btn" id="togglePaymentForm">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Add New Payment
+            </button>
+
+            <div class="payment-form" id="paymentForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Billing Month</label>
+                        <select class="form-control">
+                            <option>Select Month</option>
+                            <option selected>January 2026</option>
+                            <option>December 2025</option>
+                            <option>November 2025</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Amount Due</label>
+                        <input type="text" class="form-control" value="₱1,250.00" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Amount Paid</label>
+                        <input type="number" class="form-control" placeholder="Enter amount">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Payment Method</label>
+                        <select class="form-control">
+                            <option>Select Method</option>
+                            <option>Cash</option>
+                            <option>Check</option>
+                            <option>Online Transfer</option>
+                            <option>GCash</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">OR Number</label>
+                        <input type="text" class="form-control" placeholder="Enter OR Number">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Date Paid</label>
+                        <input type="date" class="form-control" value="2026-02-12">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-primary">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                            <polyline points="17 21 17 13 7 13 7 21" />
+                            <polyline points="7 3 7 8 15 8" />
+                        </svg>
+                        Save Payment
+                    </button>
+                    <button class="btn btn-success">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                            <polyline points="10 9 9 9 8 9" />
+                        </svg>
+                        Generate Official Receipt
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabbed Section -->
+        <section class="card tabbed-section">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="payment-records">Payment Records</button>
+                <button class="tab-btn" data-tab="audit-logs">Audit Logs</button>
+                <button class="tab-btn" data-tab="unpaid-accounts">Unpaid Accounts</button>
+            </div>
+
+            <!-- Payment Records Tab -->
+            <div class="tab-content active" id="payment-records">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>OR Number</th>
+                                <th>Billing Month</th>
+                                <th>Amount</th>
+                                <th>Payment Method</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Feb 10, 2026</td>
+                                <td>OR-2026-0234</td>
+                                <td>January 2026</td>
+                                <td>₱1,200.00</td>
+                                <td>Cash</td>
+                                <td><span class="badge badge-success">Paid</span></td>
+                            </tr>
+                            <tr>
+                                <td>Jan 15, 2026</td>
+                                <td>OR-2026-0198</td>
+                                <td>December 2025</td>
+                                <td>₱1,150.00</td>
+                                <td>GCash</td>
+                                <td><span class="badge badge-success">Paid</span></td>
+                            </tr>
+                            <tr>
+                                <td>Dec 12, 2025</td>
+                                <td>OR-2025-1876</td>
+                                <td>November 2025</td>
+                                <td>₱1,100.00</td>
+                                <td>Cash</td>
+                                <td><span class="badge badge-success">Paid</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Audit Logs Tab -->
+            <div class="tab-content" id="audit-logs">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Feb 12, 2026 16:05</td>
+                                <td>Admin User</td>
+                                <td><span class="badge badge-info">View</span></td>
+                                <td>Viewed consumer WB-2024-001</td>
+                            </tr>
+                            <tr>
+                                <td>Feb 10, 2026 14:30</td>
+                                <td>Cashier 1</td>
+                                <td><span class="badge badge-success">Payment</span></td>
+                                <td>Recorded payment OR-2026-0234</td>
+                            </tr>
+                            <tr>
+                                <td>Feb 10, 2026 14:31</td>
+                                <td>Cashier 1</td>
+                                <td><span class="badge badge-warning">Print</span></td>
+                                <td>Generated receipt OR-2026-0234</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Unpaid Accounts Tab -->
+            <div class="tab-content" id="unpaid-accounts">
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Account Number</th>
+                                <th>Consumer Name</th>
+                                <th>Billing Month</th>
+                                <th>Amount Due</th>
+                                <th>Due Date</th>
+                                <th>Days Overdue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>WB-2024-002</td>
+                                <td>Maria Santos</td>
+                                <td>December 2025</td>
+                                <td class="text-danger">₱2,340.00</td>
+                                <td>Jan 10, 2026</td>
+                                <td class="text-danger">33 days</td>
+                            </tr>
+                            <tr>
+                                <td>WB-2024-015</td>
+                                <td>Pedro Reyes</td>
+                                <td>January 2026</td>
+                                <td class="text-danger">₱1,890.00</td>
+                                <td>Feb 10, 2026</td>
+                                <td class="text-danger">2 days</td>
+                            </tr>
+                            <tr>
+                                <td>WB-2024-028</td>
+                                <td>Ana Lopez</td>
+                                <td>November 2025</td>
+                                <td class="text-danger">₱3,120.00</td>
+                                <td>Dec 10, 2025</td>
+                                <td class="text-danger">64 days</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="billing-page.js"></script>
+</body>
+
+</html>
