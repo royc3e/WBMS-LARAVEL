@@ -13,7 +13,7 @@
                 ['label' => 'Audit Logs', 'route' => 'audit-logs.index', 'icon' => 'clipboard-document-list'],
             ]
         ],
-        ['label' => 'User Management', 'route' => 'users.index', 'icon' => 'cog-6-tooth'],
+        ['label' => 'Settings', 'route' => 'users.index', 'icon' => 'cog-6-tooth'],
         ['label' => 'Reports', 'route' => 'reports.index', 'icon' => 'chart-bar'],
     ];
 @endphp

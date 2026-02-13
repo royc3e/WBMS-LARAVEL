@@ -1,76 +1,139 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Header -->
-        <div class="md:flex md:items-center md:justify-between mb-8">
-            <div class="flex-1 min-w-0">
-                <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
-                    Billing
-                </h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    Manage consumer billings and payments efficiently
-                </p>
-            </div>
-            <div class="mt-4 flex md:mt-0 md:ml-4">
-                <a href="{{ route('billings.generate') }}"
-                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                        fill="currentColor" aria-hidden="true">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" x-data="{ showBatchModal: false, showIndividualModal: false }">
+
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Billing Management</h1>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Generate, manage, and track billing records for water consumers
+            </p>
+        </div>
+
+        <!-- Success/Error Messages -->
+        @if(session('success'))
+            <div class="mb-6 rounded-lg bg-green-50 dark:bg-green-900/20 p-4 border-l-4 border-green-500">
+                <div class="flex">
+                    <svg class="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd"
-                            d="M16.704 4.153a.75.75 0 01.143 1.051l-7.5 10a.75.75 0 01-1.116.094l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 6.98-9.307a.75.75 0 011.04-.171z"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
                             clip-rule="evenodd" />
                     </svg>
-                    Generate Billing
-                </a>
+                    <p class="ml-3 text-sm font-medium text-green-800 dark:text-green-200">{{ session('success') }}</p>
+                </div>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="mb-6 rounded-lg bg-red-50 dark:bg-red-900/20 p-4 border-l-4 border-red-500">
+                <div class="flex">
+                    <svg class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <p class="ml-3 text-sm font-medium text-red-800 dark:text-red-200">{{ session('error') }}</p>
+                </div>
+            </div>
+        @endif
+
+        @if(session('info'))
+            <div class="mb-6 rounded-lg bg-blue-50 dark:bg-blue-900/20 p-4 border-l-4 border-blue-500">
+                <div class="flex">
+                    <svg class="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <p class="ml-3 text-sm font-medium text-blue-800 dark:text-blue-200">{{ session('info') }}</p>
+                </div>
+            </div>
+        @endif
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Quick Actions Section -->
+            <div class="lg:col-span-3">
+                <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold mb-1">Quick Actions</h2>
+                            <p class="text-indigo-100 text-sm">Generate billing records for consumers</p>
+                        </div>
+                        <div class="hidden sm:flex items-center space-x-3">
+                            <button @click="showBatchModal = true"
+                                class="inline-flex items-center px-4 py-2.5 bg-white text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 transition-colors duration-200 shadow-sm">
+                                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Generate All
+                            </button>
+                            <button @click="showIndividualModal = true"
+                                class="inline-flex items-center px-4 py-2.5 bg-indigo-700 text-white font-medium rounded-lg hover:bg-indigo-800 transition-colors duration-200 shadow-sm">
+                                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4" />
+                                </svg>
+                                Individual Bill
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Actions -->
+                    <div class="sm:hidden mt-4 grid grid-cols-2 gap-3">
+                        <button @click="showBatchModal = true"
+                            class="inline-flex items-center justify-center px-4 py-2.5 bg-white text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 transition-colors duration-200">
+                            <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            All Bills
+                        </button>
+                        <button @click="showIndividualModal = true"
+                            class="inline-flex items-center justify-center px-4 py-2.5 bg-indigo-700 text-white font-medium rounded-lg hover:bg-indigo-800 transition-colors duration-200">
+                            <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Individual
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Search and Filter -->
-        <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg mb-6">
-            <div class="px-4 py-5 sm:p-6">
-                <form action="{{ route('billings.index') }}" method="GET" class="space-y-4">
-                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-7">
-                        <!-- Search Input -->
-                        <div class="sm:col-span-3">
-                            <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Search
-                                bills</label>
-                            <div class="mt-1 flex rounded-md shadow-sm">
-                                <div class="relative flex flex-grow items-stretch focus-within:z-10">
-                                    <div class="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center">
-                                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg"
-                                            viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd"
-                                                d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <input type="text" name="search" id="search" value="{{ old('search', $search) }}"
-                                        class="block w-full rounded-none rounded-l-md border-gray-300 pl-10 pr-3 focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                        placeholder="Account number or consumer name">
-                                </div>
-                                <button type="submit"
-                                    class="relative -ml-px inline-flex items-center space-x-2 rounded-r-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:ring-offset-1">
-                                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                        fill="currentColor">
-                                        <path fill-rule="evenodd"
-                                            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                            clip-rule="evenodd" />
+        <!-- Filters Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+            <div class="p-6">
+                <form action="{{ route('billings.index') }}" method="GET">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <!-- Search -->
+                        <div class="lg:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Search Consumer
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
-                                    <span>Search</span>
-                                </button>
+                                </div>
+                                <input type="text" name="search" value="{{ $search }}"
+                                    placeholder="Account number or name..."
+                                    class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-400">
                             </div>
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Type the full name (first last) or
-                                account number of the consumer.</p>
                         </div>
 
-                        <!-- Status Filter -->
-                        <div class="sm:col-span-2">
-                            <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Billing
-                                status</label>
-                            <select id="status" name="status"
-                                class="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 pl-3 pr-10 text-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                <option value="" {{ $status === '' ? 'selected' : '' }}>All statuses</option>
+                        <!-- Status -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Status
+                            </label>
+                            <select name="status"
+                                class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                <option value="">All</option>
                                 <option value="pending" {{ $status === 'pending' ? 'selected' : '' }}>Pending</option>
                                 <option value="paid" {{ $status === 'paid' ? 'selected' : '' }}>Paid</option>
                                 <option value="overdue" {{ $status === 'overdue' ? 'selected' : '' }}>Overdue</option>
@@ -78,19 +141,24 @@
                             </select>
                         </div>
 
-                        <!-- Month Filter -->
-                        <div class="sm:col-span-2">
-                            <label for="month" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Billing
-                                month</label>
-                            <input type="month" name="month" id="month" value="{{ $month }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <!-- Month -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Month
+                            </label>
+                            <input type="month" name="month" value="{{ $month }}"
+                                class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
                         </div>
 
-                        <!-- Reset Button -->
-                        <div class="sm:col-span-7 flex items-center justify-end gap-2">
+                        <!-- Actions -->
+                        <div class="flex items-end gap-2">
+                            <button type="submit"
+                                class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200">
+                                Filter
+                            </button>
                             <a href="{{ route('billings.index') }}"
-                                class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600">
-                                Reset filters
+                                class="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 text-center">
+                                Clear
                             </a>
                         </div>
                     </div>
@@ -98,315 +166,339 @@
             </div>
         </div>
 
-        <!-- Billings Table -->
-        <div class="flex flex-col">
-            <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-                    <div class="shadow overflow-hidden border-b border-gray-200 dark:border-gray-700 sm:rounded-lg">
-                        @if($billings->count() > 0)
-                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                <thead class="bg-gray-50 dark:bg-gray-800">
-                                    <tr>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            Consumer
-                                        </th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            Billing Period
-                                        </th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            Amount
-                                        </th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            Paid
-                                        </th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            Balance
-                                        </th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            Status
-                                        </th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            Due Date
-                                        </th>
-                                        <th scope="col" class="relative px-6 py-3">
-                                            <span class="sr-only">Actions</span>
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                    @foreach($billings as $billing)
+        <!-- Billing Records Table -->
+        <div
+            class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            @if($billings->count() > 0)
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-900">
+                            <tr>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Consumer</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Type</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Period</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Usage</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Amount</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Due Date</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Status</th>
+                                <th
+                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            @foreach($billings as $billing)
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center">
+                                            <div
+                                                class="h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-semibold text-sm">
+                                                {{ strtoupper(substr($billing->consumer->first_name, 0, 1) . substr($billing->consumer->last_name, 0, 1)) }}
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                                    {{ $billing->consumer->first_name }} {{ $billing->consumer->last_name }}
+                                                </div>
+                                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                    {{ $billing->consumer->account_number }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
                                         @php
-                                            $consumer = $billing->consumer;
-                                            $firstInitial = strtoupper(mb_substr($consumer->first_name ?? '', 0, 1));
-                                            $lastInitial = strtoupper(mb_substr($consumer->last_name ?? '', 0, 1));
-                                            $initials = trim($firstInitial . $lastInitial) !== '' ? $firstInitial . $lastInitial : '??';
-                                            $isOverdue = optional($billing->due_date)->isPast() && !in_array($billing->status, ['paid', 'cancelled']);
+                                            $typeConfig = [
+                                                'residential' => ['bg' => 'bg-blue-100 dark:bg-blue-900/30', 'text' => 'text-blue-700 dark:text-blue-300', 'icon' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'],
+                                                'commercial' => ['bg' => 'bg-purple-100 dark:bg-purple-900/30', 'text' => 'text-purple-700 dark:text-purple-300', 'icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4']
+                                            ];
+                                            $type = strtolower($billing->consumer->connection_type ?? 'residential');
+                                            $config = $typeConfig[$type] ?? $typeConfig['residential'];
                                         @endphp
-                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="flex items-center">
-                                                    <div
-                                                        class="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300">
-                                                        {{ $initials }}
-                                                    </div>
-                                                    <div class="ml-4">
-                                                        <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                                            {{ $consumer?->full_name ?? 'Unknown consumer' }}
-                                                        </div>
-                                                        <div class="text-sm text-gray-500 dark:text-gray-400">
-                                                            {{ $consumer?->account_number ?? '—' }}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm text-gray-900 dark:text-white">
-                                                    {{ optional($billing->billing_month)->format('F Y') ?? '—' }}
-                                                </div>
-                                                <div class="text-sm text-gray-500 dark:text-gray-400">
-                                                    {{ number_format((float) $billing->consumption, 2) }} units
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white text-right">
-                                                {{ number_format((float) $billing->amount, 2) }}
-                                            </td>
-                                            <td
-                                                class="px-6 py-4 whitespace-nowrap text-sm text-right {{ $billing->total_paid > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400' }}">
-                                                {{ number_format((float) $billing->total_paid, 2) }}
-                                            </td>
-                                            <td
-                                                class="px-6 py-4 whitespace-nowrap text-sm font-medium text-right {{ $billing->balance > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400' }}">
-                                                {{ number_format((float) max($billing->balance, 0), 2) }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                @php
-                                                    $statusClasses = [
-                                                        'pending' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100',
-                                                        'paid' => 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100',
-                                                        'overdue' => 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100',
-                                                        'cancelled' => 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-100',
-                                                    ][$billing->status] ?? 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-100';
-                                                @endphp
-                                                <span
-                                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusClasses }}">
-                                                    {{ ucfirst($billing->status) }}
-                                                </span>
-                                            </td>
-                                            <td
-                                                class="px-6 py-4 whitespace-nowrap text-sm {{ $isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400' }}">
-                                                {{ optional($billing->due_date)->format('M d, Y') ?? '—' }}
-                                                @php
-                                                    $dummy = 0;
-                                                @endphp
-                                                @if($isOverdue)
-                                                    <span class="ml-1 text-xs font-medium uppercase tracking-wide">(Overdue)</span>
-                                                @endif
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <div class="flex justify-end space-x-2">
-                                                    <a href="{{ route('billings.show', $billing) }}"
-                                                        class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
-                                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                        </svg>
-                                                        <span class="sr-only">View</span>
-                                                    </a>
-                                                    <a href="{{ route('billings.edit', $billing) }}"
-                                                        class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
-                                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                        </svg>
-                                                        <span class="sr-only">Edit</span>
-                                                    </a>
-                                                    @if($billing->status !== 'cancelled')
-                                                        <a href="{{ route('billings.show', $billing) }}#payments"
-                                                            class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300">
-                                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                            </svg>
-                                                            <span class="sr-only">Process Payment</span>
-                                                        </a>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        @else
-                            <div class="text-center py-12">
-                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
-                                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No billings found</h3>
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                    Get started by creating a new billing record.
-                                </p>
-                                <div class="mt-6">
-                                    <a href="{{ route('billings.create') }}"
-                                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                        <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                            fill="currentColor" aria-hidden="true">
-                                            <path fill-rule="evenodd"
-                                                d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                        New Billing
-                                    </a>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $config['bg'] }} {{ $config['text'] }}">
+                                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="{{ $config['icon'] }}" />
+                                            </svg>
+                                            {{ ucfirst($type) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white font-medium">
+                                        {{ \Carbon\Carbon::parse($billing->billing_month)->format('M Y') }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-semibold text-gray-900 dark:text-white">
+                                            {{ number_format($billing->consumption, 1) }} m³
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-bold text-gray-900 dark:text-white">
+                                            ₱{{ number_format($billing->amount, 2) }}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
+                                        {{ \Carbon\Carbon::parse($billing->due_date)->format('M d, Y') }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        @php
+                                            $statusConfig = [
+                                                'pending' => ['bg' => 'bg-yellow-100 dark:bg-yellow-900/30', 'text' => 'text-yellow-800 dark:text-yellow-300', 'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
+                                                'paid' => ['bg' => 'bg-green-100 dark:bg-green-900/30', 'text' => 'text-green-800 dark:text-green-300', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                                                'overdue' => ['bg' => 'bg-red-100 dark:bg-red-900/30', 'text' => 'text-red-800 dark:text-red-300', 'icon' => 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
+                                                'cancelled' => ['bg' => 'bg-gray-100 dark:bg-gray-700', 'text' => 'text-gray-600 dark:text-gray-400', 'icon' => 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z']
+                                            ];
+                                            $config = $statusConfig[$billing->status] ?? $statusConfig['cancelled'];
+                                        @endphp
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $config['bg'] }} {{ $config['text'] }}">
+                                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="{{ $config['icon'] }}" />
+                                            </svg>
+                                            {{ ucfirst($billing->status) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                                        <a href="{{ route('billings.show', $billing) }}"
+                                            class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium">
+                                            View
+                                        </a>
+                                        @if($billing->status === 'pending')
+                                            <a href="{{ route('billings.payments.create', $billing) }}"
+                                                class="ml-4 text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 font-medium">
+                                                Pay
+                                            </a>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
 
-                    <!-- Pagination -->
-                    @if($billings->hasPages())
-                        <div
-                            class="bg-white dark:bg-gray-800 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6">
-                            <div class="flex-1 flex justify-between sm:hidden">
-                                @if($billings->onFirstPage())
-                                    <span
-                                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">
-                                        Previous
-                                    </span>
-                                @else
-                                    <a href="{{ $billings->previousPageUrl() }}"
-                                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
-                                        Previous
-                                    </a>
-                                @endif
-                                @if($billings->hasMorePages())
-                                    <a href="{{ $billings->nextPageUrl() }}"
-                                        class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
-                                        Next
-                                    </a>
-                                @else
-                                    <span
-                                        class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">
-                                        Next
-                                    </span>
-                                @endif
-                            </div>
-                            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                                <div>
-                                    <p class="text-sm text-gray-700 dark:text-gray-300">
-                                        Showing
-                                        <span class="font-medium">{{ $billings->firstItem() }}</span>
-                                        to
-                                        <span class="font-medium">{{ $billings->lastItem() }}</span>
-                                        of
-                                        <span class="font-medium">{{ $billings->total() }}</span>
-                                        results
+                <!-- Pagination -->
+                <div class="bg-white dark:bg-gray-800 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                    {{ $billings->links() }}
+                </div>
+            @else
+                <div class="text-center py-16">
+                    <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">No billing records found</h3>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        Try adjusting your filters or generate new billing records.
+                    </p>
+                </div>
+            @endif
+        </div>
+
+        <!-- Batch Generation Modal -->
+        <div x-show="showBatchModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title"
+            role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+                <div x-show="showBatchModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                    class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" @click="showBatchModal = false">
+                </div>
+
+                <div x-show="showBatchModal" x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4 sm:scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave-end="opacity-0 translate-y-4 sm:scale-95"
+                    class="relative inline-block bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
+
+                    <form action="{{ route('billings.generate-all') }}" method="POST">
+                        @csrf
+                        <div class="bg-white dark:bg-gray-800 px-6 pt-6 pb-5">
+                            <div class="sm:flex sm:items-start">
+                                <div
+                                    class="mx-auto flex-shrink-0 flex items-center justify-center h-14 w-14 rounded-full bg-indigo-100 dark:bg-indigo-900 sm:mx-0">
+                                    <svg class="h-7 w-7 text-indigo-600 dark:text-indigo-300" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                </div>
+                                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-1">
+                                    <h3 class="text-xl leading-6 font-semibold text-gray-900 dark:text-white">
+                                        Generate All Bills
+                                    </h3>
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                        Create billing records for all active consumers
                                     </p>
                                 </div>
+                            </div>
+
+                            <div class="mt-6 space-y-5">
                                 <div>
-                                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                                        aria-label="Pagination">
-                                        @if($billings->onFirstPage())
-                                            <span
-                                                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-300 dark:bg-gray-700 dark:border-gray-600">
-                                                <span class="sr-only">Previous</span>
-                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                    fill="currentColor" aria-hidden="true">
-                                                    <path fill-rule="evenodd"
-                                                        d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                                                        clip-rule="evenodd" />
-                                                </svg>
-                                            </span>
-                                        @else
-                                            <a href="{{ $billings->previousPageUrl() }}"
-                                                class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
-                                                <span class="sr-only">Previous</span>
-                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                    fill="currentColor" aria-hidden="true">
-                                                    <path fill-rule="evenodd"
-                                                        d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                                                        clip-rule="evenodd" />
-                                                </svg>
-                                            </a>
-                                        @endif
-
-                                        @foreach($billings->getUrlRange(1, $billings->lastPage()) as $page => $url)
-                                            @if($page == $billings->currentPage())
-                                                <span
-                                                    class="relative inline-flex items-center px-4 py-2 border border-indigo-500 bg-indigo-50 text-sm font-medium text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300">
-                                                    {{ $page }}
-                                                </span>
-                                            @else
-                                                <a href="{{ $url }}"
-                                                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
-                                                    {{ $page }}
-                                                </a>
-                                            @endif
-                                        @endforeach
-
-                                        @if($billings->hasMorePages())
-                                            <a href="{{ $billings->nextPageUrl() }}"
-                                                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
-                                                <span class="sr-only">Next</span>
-                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                    fill="currentColor" aria-hidden="true">
-                                                    <path fill-rule="evenodd"
-                                                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                                        clip-rule="evenodd" />
-                                                </svg>
-                                            </a>
-                                        @else
-                                            <span
-                                                class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-300 dark:bg-gray-700 dark:border-gray-600">
-                                                <span class="sr-only">Next</span>
-                                                <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                    fill="currentColor" aria-hidden="true">
-                                                    <path fill-rule="evenodd"
-                                                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                                        clip-rule="evenodd" />
-                                                </svg>
-                                            </span>
-                                        @endif
-                                    </nav>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Billing Month
+                                    </label>
+                                    <input type="month" name="billing_month" required
+                                        class="block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Due Date
+                                    </label>
+                                    <input type="date" name="due_date" required
+                                        class="block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Connection Type (Optional)
+                                    </label>
+                                    <select name="connection_type"
+                                        class="block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                        <option value="">All Types</option>
+                                        <option value="residential">Residential</option>
+                                        <option value="commercial">Commercial</option>
+                                        <option value="industrial">Industrial</option>
+                                        <option value="government">Government</option>
+                                    </select>
+                                </div>
+                                <div
+                                    class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                                    <p class="text-sm text-blue-800 dark:text-blue-200">
+                                        <strong>{{ \App\Models\Consumer::where('connection_status', 'active')->count() }}
+                                            active consumers</strong> will be billed using the default rate.
+                                    </p>
                                 </div>
                             </div>
                         </div>
-                    @endif
+                        <div class="bg-gray-50 dark:bg-gray-900 px-6 py-4 sm:flex sm:flex-row-reverse gap-3">
+                            <button type="submit"
+                                class="w-full sm:w-auto inline-flex justify-center items-center px-5 py-2.5 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Generate All Bills
+                            </button>
+                            <button type="button" @click="showBatchModal = false"
+                                class="mt-3 w-full sm:mt-0 sm:w-auto inline-flex justify-center px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Individual Generation Modal -->
+        <div x-show="showIndividualModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title"
+            role="dialog" aria-modal="true">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+                <div x-show="showIndividualModal" x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                    x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"
+                    @click="showIndividualModal = false"></div>
+
+                <div x-show="showIndividualModal" x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4 sm:scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave-end="opacity-0 translate-y-4 sm:scale-95"
+                    class="relative inline-block bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
+
+                    <form action="{{ route('billings.generate-individual') }}" method="POST">
+                        @csrf
+                        <div class="bg-white dark:bg-gray-800 px-6 pt-6 pb-5">
+                            <div class="sm:flex sm:items-start">
+                                <div
+                                    class="mx-auto flex-shrink-0 flex items-center justify-center h-14 w-14 rounded-full bg-emerald-100 dark:bg-emerald-900 sm:mx-0">
+                                    <svg class="h-7 w-7 text-emerald-600 dark:text-emerald-300" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                </div>
+                                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-1">
+                                    <h3 class="text-xl leading-6 font-semibold text-gray-900 dark:text-white">
+                                        Generate Individual Bill
+                                    </h3>
+                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                        Create a billing record for a specific consumer
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 space-y-5">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Select Consumer
+                                    </label>
+                                    <select name="consumer_id" required
+                                        class="block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                        <option value="">Choose a consumer...</option>
+                                        @foreach(\App\Models\Consumer::orderBy('first_name')->get() as $consumer)
+                                            <option value="{{ $consumer->id }}">
+                                                {{ $consumer->account_number }} - {{ $consumer->first_name }}
+                                                {{ $consumer->last_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Billing Month
+                                    </label>
+                                    <input type="month" name="billing_month" required
+                                        class="block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Due Date
+                                    </label>
+                                    <input type="date" name="due_date" required
+                                        class="block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                                </div>
+                                <div
+                                    class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                                    <p class="text-sm text-amber-800 dark:text-amber-200">
+                                        <strong>Note:</strong> Use this for corrections or special cases only.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-900 px-6 py-4 sm:flex sm:flex-row-reverse gap-3">
+                            <button type="submit"
+                                class="w-full sm:w-auto inline-flex justify-center items-center px-5 py-2.5 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
+                                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v16m8-8H4" />
+                                </svg>
+                                Generate Bill
+                            </button>
+                            <button type="button" @click="showIndividualModal = false"
+                                class="mt-3 w-full sm:mt-0 sm:w-auto inline-flex justify-center px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
-
-    @push('scripts')
-        <script>
-            // Auto-submit form when filters change
-            document.addEventListener('DOMContentLoaded', function () {
-                const statusSelect = document.getElementById('status');
-                const monthInput = document.getElementById('month');
-                const form = document.querySelector('form');
-
-                if (statusSelect) {
-                    statusSelect.addEventListener('change', function () {
-                        form.submit();
-                    });
-                }
-
-                if (monthInput) {
-                    monthInput.addEventListener('change', function () {
-                        form.submit();
-                    });
-                }
-            });
-        </script>
-    @endpush
 @endsection

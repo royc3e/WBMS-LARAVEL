@@ -23,9 +23,12 @@ class Billing extends Model
         'current_reading',
         'consumption',
         'amount',
+        'previous_balance',
+        'penalty',
         'due_date',
         'status',
         'created_by',
+        'notes',
     ];
 
     /**

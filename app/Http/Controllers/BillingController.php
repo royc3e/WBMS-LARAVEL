@@ -7,6 +7,8 @@ use App\Models\Consumer;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class BillingController extends Controller
 {
@@ -81,100 +83,276 @@ class BillingController extends Controller
     }
 
     /**
-     * Generate billing for all active consumers.
+     * Generate billing for all active consumers (Batch Processing).
      */
-    public function generateActive(Request $request)
+    public function generateAll(Request $request)
     {
         $validated = $request->validate([
             'billing_month' => 'required|date_format:Y-m',
             'due_date' => 'required|date|after:today',
+            'connection_type' => 'nullable|in:residential,commercial,industrial,government',
         ]);
 
-        $ratePerUnit = (float) config('billing.default_rate_per_unit', 0);
+        $ratePerUnit = (float) config('billing.default_rate_per_unit', 25.00);
+        $penaltyRate = (float) config('billing.penalty_rate', 0.02); // 2% penalty
         $billingDate = $validated['billing_month'] . '-01';
         $dueDate = $validated['due_date'];
+        $connectionTypeFilter = $validated['connection_type'] ?? null;
 
-        $activeConsumers = Consumer::where('connection_status', 'active')->get();
+        // Build query for active consumers
+        $query = Consumer::where('connection_status', 'active');
+
+        // Apply connection type filter if specified
+        if ($connectionTypeFilter) {
+            $query->where('connection_type', $connectionTypeFilter);
+        }
+
+        $activeConsumers = $query->get();
 
         if ($activeConsumers->isEmpty()) {
-            return redirect()->back()->with('info', 'No active consumers found to generate billing.');
+            $message = $connectionTypeFilter
+                ? "No active {$connectionTypeFilter} consumers found to generate billing."
+                : 'No active consumers found to generate billing.';
+            return redirect()->back()->with('error', $message);
         }
 
         $created = 0;
+        $skipped = 0;
+        $skipReasons = [];
 
-        foreach ($activeConsumers as $consumer) {
-            $latestBilling = $consumer->billings()->latest('billing_month')->first();
+        DB::beginTransaction();
+        try {
+            foreach ($activeConsumers as $consumer) {
+                // Skip if connection_type is null
+                if (!$consumer->connection_type) {
+                    $skipped++;
+                    $skipReasons[] = "{$consumer->account_number}: No connection type";
+                    continue;
+                }
 
-            $previousReading = $latestBilling?->current_reading ?? 0;
-            $currentReading = $previousReading; // Replace with actual reading logic when available
-            $consumption = max($currentReading - $previousReading, 0);
-            $amount = $consumption * $ratePerUnit;
+                // Get the most recent meter reading for this consumer
+                $latestMeterReading = DB::table('meter_readings')
+                    ->where('consumer_id', $consumer->id)
+                    ->orderBy('reading_date', 'desc')
+                    ->first();
 
-            Billing::create([
-                'consumer_id' => $consumer->id,
-                'billing_month' => $billingDate,
-                'previous_reading' => $previousReading,
-                'current_reading' => $currentReading,
-                'consumption' => $consumption,
-                'amount' => $amount,
-                'due_date' => $dueDate,
-                'status' => 'pending',
-                'created_by' => $request->user()->id,
-                'notes' => sprintf('Generated for active consumers at %.2f rate', $ratePerUnit),
-            ]);
+                // Get latest billing to check if already billed for this month
+                $existingBilling = Billing::where('consumer_id', $consumer->id)
+                    ->where('billing_month', $billingDate)
+                    ->first();
 
-            $created++;
+                if ($existingBilling) {
+                    $skipped++;
+                    $skipReasons[] = "{$consumer->account_number}: Already billed";
+                    continue; // Skip if already billed for this month
+                }
+
+                // Get latest billing for previous reading
+                $latestBilling = $consumer->billings()->latest('billing_month')->first();
+
+                // Calculate previous balance (unpaid amount from previous billings)
+                $previousBalance = $consumer->billings()
+                    ->whereIn('status', ['pending', 'overdue'])
+                    ->sum('amount');
+
+                // Get readings - use meter reading if exists, otherwise simulate
+                if ($latestMeterReading) {
+                    $previousReading = $latestBilling?->current_reading ?? 0;
+                    $currentReading = $latestMeterReading->current_reading;
+                } else {
+                    // Fallback to simulation if no meter readings exist
+                    $previousReading = $latestBilling?->current_reading ?? 0;
+                    $currentReading = $previousReading + rand(5, 30);
+                }
+
+                $consumption = max($currentReading - $previousReading, 0);
+
+                // Calculate penalty if there's previous overdue balance
+                $penalty = 0;
+                if ($previousBalance > 0) {
+                    $penalty = $previousBalance * $penaltyRate;
+                }
+
+                // Calculate consumption amount using new tiered pricing
+                $consumptionAmount = $this->calculateConsumptionCharge($consumption, $consumer->connection_type);
+                $totalAmount = $consumptionAmount + $previousBalance + $penalty;
+
+                Billing::create([
+                    'consumer_id' => $consumer->id,
+                    'billing_month' => $billingDate,
+                    'previous_reading' => $previousReading,
+                    'current_reading' => $currentReading,
+                    'consumption' => $consumption,
+                    'amount' => $totalAmount,
+                    'previous_balance' => $previousBalance,
+                    'penalty' => $penalty,
+                    'due_date' => $dueDate,
+                    'status' => 'pending',
+                    'created_by' => $request->user()->id,
+                    'notes' => sprintf(
+                        'Batch generated | Consumption: %.2fm³ | Charge: ₱%.2f | Type: %s | Prev Balance: ₱%.2f | Penalty: ₱%.2f',
+                        $consumption,
+                        $consumptionAmount,
+                        ucfirst($consumer->connection_type),
+                        $previousBalance,
+                        $penalty
+                    ),
+                ]);
+
+                $created++;
+            }
+
+            // Check if any bills were created
+            if ($created === 0) {
+                DB::rollBack();
+                $errorMessage = "No bills were generated. ";
+                if ($skipped > 0) {
+                    $errorMessage .= "{$skipped} consumer(s) were skipped. Reasons: " . implode(', ', array_slice($skipReasons, 0, 5));
+                    if (count($skipReasons) > 5) {
+                        $errorMessage .= ', and ' . (count($skipReasons) - 5) . ' more...';
+                    }
+                }
+                return redirect()->back()->with('error', $errorMessage);
+            }
+
+            // Log to audit log
+            $typeInfo = $connectionTypeFilter ? " ({$connectionTypeFilter} only)" : '';
+            $this->logAudit(
+                'Batch Bill Generation',
+                "Generated {$created} billing records for active consumers{$typeInfo} for " . Carbon::parse($billingDate)->format('F Y'),
+                $request->user()->id
+            );
+
+            DB::commit();
+
+            $successMessage = "Successfully generated {$created} billing record(s)" . ($connectionTypeFilter ? " for {$connectionTypeFilter} consumers" : '') . ".";
+            if ($skipped > 0) {
+                $successMessage .= " {$skipped} consumer(s) were skipped.";
+            }
+
+            return redirect()->route('billings.index')->with('success', $successMessage);
+
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'Failed to generate billings: ' . $e->getMessage());
         }
-
-        return redirect()->route('billings.index')
-            ->with('success', "Generated {$created} billing records for active consumers.");
     }
 
     /**
-     * Generate billing for selected consumers.
+     * Generate billing for individual consumer.
      */
-    public function generateSelected(Request $request)
+    public function generateIndividual(Request $request)
     {
         $validated = $request->validate([
-            'consumer_ids' => 'required|array|min:1',
-            'consumer_ids.*' => 'exists:consumers,id',
+            'consumer_id' => 'required|exists:consumers,id',
             'billing_month' => 'required|date_format:Y-m',
             'due_date' => 'required|date|after:today',
-            'rate_per_unit' => 'required|numeric|min:0',
         ]);
 
-        $consumers = Consumer::whereIn('id', $validated['consumer_ids'])->get();
-
-        $created = 0;
+        $ratePerUnit = (float) config('billing.default_rate_per_unit', 25.00);
+        $penaltyRate = (float) config('billing.penalty_rate', 0.02);
         $billingDate = $validated['billing_month'] . '-01';
         $dueDate = $validated['due_date'];
 
-        foreach ($consumers as $consumer) {
+        $consumer = Consumer::findOrFail($validated['consumer_id']);
+
+        // Check if connection type exists
+        if (!$consumer->connection_type) {
+            return redirect()->back()
+                ->with('error', 'Consumer does not have a connection type set. Please update consumer details first.');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Check if already billed for this month
+            $existingBilling = Billing::where('consumer_id', $consumer->id)
+                ->where('billing_month', $billingDate)
+                ->first();
+
+            if ($existingBilling) {
+                return redirect()->back()
+                    ->with('error', 'Billing for this consumer already exists for ' . Carbon::parse($billingDate)->format('F Y'));
+            }
+
+            // Get the most recent meter reading for this consumer
+            $latestMeterReading = DB::table('meter_readings')
+                ->where('consumer_id', $consumer->id)
+                ->orderBy('reading_date', 'desc')
+                ->first();
+
+            // Get latest billing
             $latestBilling = $consumer->billings()->latest('billing_month')->first();
 
-            $previousReading = $latestBilling?->current_reading ?? 0;
-            $currentReading = $previousReading; // Replace with actual reading logic when available
-            $consumption = max($currentReading - $previousReading, 0);
-            $amount = $consumption * $validated['rate_per_unit'];
+            // Calculate previous balance
+            $previousBalance = $consumer->billings()
+                ->whereIn('status', ['pending', 'overdue'])
+                ->sum('amount');
 
-            Billing::create([
+            // Get readings - use meter reading if exists, otherwise simulate
+            if ($latestMeterReading) {
+                $previousReading = $latestBilling?->current_reading ?? 0;
+                $currentReading = $latestMeterReading->current_reading;
+                $readingSource = 'meter reading';
+            } else {
+                // Fallback to simulation if no meter readings exist
+                $previousReading = $latestBilling?->current_reading ?? 0;
+                $currentReading = $previousReading + rand(5, 30);
+                $readingSource = 'simulated';
+            }
+
+            $consumption = max($currentReading - $previousReading, 0);
+
+            // Calculate penalty
+            $penalty = 0;
+            if ($previousBalance > 0) {
+                $penalty = $previousBalance * $penaltyRate;
+            }
+
+            // Calculate consumption amount using new tiered pricing
+            $consumptionAmount = $this->calculateConsumptionCharge($consumption, $consumer->connection_type);
+            $totalAmount = $consumptionAmount + $previousBalance + $penalty;
+
+            $billing = Billing::create([
                 'consumer_id' => $consumer->id,
                 'billing_month' => $billingDate,
                 'previous_reading' => $previousReading,
                 'current_reading' => $currentReading,
                 'consumption' => $consumption,
-                'amount' => $amount,
+                'amount' => $totalAmount,
+                'previous_balance' => $previousBalance,
+                'penalty' => $penalty,
                 'due_date' => $dueDate,
                 'status' => 'pending',
                 'created_by' => $request->user()->id,
-                'notes' => 'Generated via custom selection',
+                'notes' => sprintf(
+                    'Individual | Account: %s | Consumption: %.2fm³ | Charge: ₱%.2f | Type: %s | Source: %s',
+                    $consumer->account_number,
+                    $consumption,
+                    $consumptionAmount,
+                    ucfirst($consumer->connection_type),
+                    $readingSource
+                ),
             ]);
 
-            $created++;
-        }
+            // Log to audit log
+            $this->logAudit(
+                'Individual Bill Generation',
+                "Generated billing for {$consumer->first_name} {$consumer->last_name} (Account: {$consumer->account_number}) for " . Carbon::parse($billingDate)->format('F Y'),
+                $request->user()->id
+            );
 
-        return redirect()->route('billings.index')
-            ->with('success', "Generated {$created} billing records for selected consumers.");
+            DB::commit();
+
+            return redirect()->route('billings.index')
+                ->with('success', "Successfully generated billing for {$consumer->first_name} {$consumer->last_name}.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'Failed to generate billing: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -366,5 +544,45 @@ class BillingController extends Controller
         $payment->load(['billing.consumer', 'receivedBy']);
 
         return view('billings.receipt', compact('payment'));
+    }
+
+    /**
+     * Calculate consumption charge based on tiered pricing.
+     */
+    private function calculateConsumptionCharge(float $consumption, string $connectionType): float
+    {
+        $MINIMUM_CHARGE = 200.00;
+        $MINIMUM_CONSUMPTION = 10.00;
+        $RESIDENTIAL_RATE = 15.00;
+        $COMMERCIAL_RATE = 20.00;
+
+        // If consumption is 10 m³ or below, charge minimum
+        if ($consumption <= $MINIMUM_CONSUMPTION) {
+            return $MINIMUM_CHARGE;
+        }
+
+        // Calculate excess consumption
+        $excess = $consumption - $MINIMUM_CONSUMPTION;
+
+        // Determine rate based on connection type
+        $rate = strtolower($connectionType) === 'commercial' ? $COMMERCIAL_RATE : $RESIDENTIAL_RATE;
+
+        // Return minimum charge + excess charge
+        return $MINIMUM_CHARGE + ($excess * $rate);
+    }
+
+    /**
+     * Log action to audit log.
+     */
+    private function logAudit(string $action, string $details, int $userId)
+    {
+        DB::table('audit_logs')->insert([
+            'user_id' => $userId,
+            'action' => $action,
+            'details' => $details,
+            'date_time' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }
