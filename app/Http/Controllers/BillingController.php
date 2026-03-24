@@ -599,15 +599,15 @@ class BillingController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('account_number', 'like', "%{$search}%")
-                  ->orWhere('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%");
+                    ->orWhere('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%");
             });
         }
 
         if ($connectionType) {
             $query->where('connection_type', $connectionType);
         }
-        
+
         if ($status) {
             $query->where('connection_status', $status);
         }

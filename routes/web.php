@@ -72,7 +72,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // User Management Routes
     Route::resource('users', \App\Http\Controllers\UserController::class)->except(['show']);
-    Route::view('/reports', 'dashboard')->name('reports.index');
+    Route::get('/reports', [\App\Http\Controllers\ReportController::class, 'index'])->name('reports.index');
 });
 
 Route::middleware('auth')->group(function () {

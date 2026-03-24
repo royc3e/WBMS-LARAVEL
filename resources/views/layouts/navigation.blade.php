@@ -158,6 +158,14 @@
                     @php
                         $hasRoute = Route::has($link['route']);
                         $isActive = $hasRoute && request()->routeIs($link['route']);
+                        
+                        // Smart active state: if this is an .index route, keep it active on all its child routes
+                        if (!$isActive && str_ends_with($link['route'], '.index')) {
+                            $baseRoute = str_replace('.index', '.*', $link['route']);
+                            if (request()->routeIs($baseRoute)) {
+                                $isActive = true;
+                            }
+                        }
                     @endphp
 
                     <li>
