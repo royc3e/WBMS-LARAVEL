@@ -277,9 +277,12 @@
                                             class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium">
                                             View
                                         </a>
-                                        @if($billing->status === 'pending')
+                                        @if(in_array($billing->status, ['pending', 'overdue']))
                                             <a href="{{ route('billings.payments.create', $billing) }}"
-                                                class="ml-4 text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 font-medium">
+                                                class="ml-3 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 transition-all duration-150">
+                                                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                </svg>
                                                 Pay
                                             </a>
                                         @endif

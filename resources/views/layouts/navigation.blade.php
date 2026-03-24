@@ -8,9 +8,9 @@
             'icon'  => 'currency-dollar',
             'dropdown' => true,
             'submenu' => [
-                ['label' => 'Billing Page',  'route' => 'billings.index',    'icon' => 'document-text'],
-                ['label' => 'Payment Page',  'route' => 'payments.index',    'icon' => 'credit-card'],
-                ['label' => 'Audit Logs',    'route' => 'audit-logs.index',  'icon' => 'clipboard-document-list'],
+                ['label' => 'Billing Page',    'route' => 'billings.index',    'icon' => 'document-text'],
+                ['label' => 'Payment Page',    'route' => 'payments.index',    'icon' => 'credit-card'],
+                ['label' => 'Accounts Ledger', 'route' => 'billing.ledger',    'icon' => 'clipboard-document-list'],
             ]
         ],
         ['label' => 'Settings', 'route' => 'settings.index', 'icon' => 'cog-6-tooth'],
@@ -56,6 +56,16 @@
                             if (Route::has($sub['route']) && request()->routeIs($sub['route'])) {
                                 $hasActiveSubmenu = true;
                                 break;
+                            }
+                        }
+                        // Also keep "Billing & Payments" open when on any billings.* or billing.* sub-page
+                        // (e.g. billings.payments.create, billings.show, billing.ledger)
+                        if (!$hasActiveSubmenu && isset($link['dropdown']) && $link['dropdown']) {
+                            $billingRoutes = array_column($link['submenu'], 'route');
+                            if (in_array('billings.index', $billingRoutes) || in_array('payments.index', $billingRoutes) || in_array('billing.ledger', $billingRoutes)) {
+                                if (request()->routeIs('billings.*') || request()->routeIs('payments.*') || request()->routeIs('billing.ledger*')) {
+                                    $hasActiveSubmenu = true;
+                                }
                             }
                         }
                     @endphp
@@ -105,6 +115,15 @@
                                 @php
                                     $hasRoute = Route::has($sublink['route']);
                                     $isActive = $hasRoute && request()->routeIs($sublink['route']);
+                                    
+                                    // Make sure "Billing Page" sub-item stays active when deeper in billing module
+                                    if ($sublink['route'] === 'billings.index' && request()->routeIs('billings.*')) {
+                                        $isActive = true;
+                                    }
+                                    // And same for "Payment Page" if there are any child payment routes
+                                    if ($sublink['route'] === 'payments.index' && request()->routeIs('payments.*')) {
+                                        $isActive = true;
+                                    }
                                 @endphp
 
                                 <li>

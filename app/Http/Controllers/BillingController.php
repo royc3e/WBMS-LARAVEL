@@ -585,4 +585,61 @@ class BillingController extends Controller
             'updated_at' => now(),
         ]);
     }
+    /**
+     * Display the Accounts Ledger Consumer List.
+     */
+    public function ledgerIndex(Request $request)
+    {
+        $search = $request->input('search');
+        $connectionType = $request->input('connection_type');
+        $status = $request->input('status');
+
+        $query = Consumer::query();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('account_number', 'like', "%{$search}%")
+                  ->orWhere('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%");
+            });
+        }
+
+        if ($connectionType) {
+            $query->where('connection_type', $connectionType);
+        }
+        
+        if ($status) {
+            $query->where('connection_status', $status);
+        }
+
+        $consumers = $query->orderBy('first_name')->paginate(10)->withQueryString();
+
+        return view('billings.ledger_index', compact('consumers', 'search', 'connectionType', 'status'));
+    }
+
+    /**
+     * Display a specific Consumer's Ledger Table.
+     */
+    public function ledgerShow(Request $request, Consumer $consumer)
+    {
+        $status = $request->input('status');
+        $year = $request->input('year');
+        $month = $request->input('month');
+
+        $billingQuery = $consumer->billings()->with('payments')->orderByDesc('billing_month');
+
+        if ($status) {
+            $billingQuery->where('status', $status);
+        }
+        if ($year) {
+            $billingQuery->whereYear('billing_month', $year);
+        }
+        if ($month) {
+            $billingQuery->whereMonth('billing_month', $month);
+        }
+
+        $billings = $billingQuery->get();
+
+        return view('billings.ledger_show', compact('consumer', 'billings', 'status', 'year', 'month'));
+    }
 }
