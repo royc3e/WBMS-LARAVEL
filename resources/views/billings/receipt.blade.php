@@ -5,7 +5,7 @@
     <!-- Receipt Header -->
     <div class="text-center mb-8">
         <h1 class="text-2xl font-bold text-gray-800">PAYMENT RECEIPT</h1>
-        <p class="text-gray-600">Water Billing Management System</p>
+        <p class="text-gray-600">Water System Level III</p>
         <p class="text-sm text-gray-500 mt-1">{{ config('app.name') }}</p>
     </div>
 

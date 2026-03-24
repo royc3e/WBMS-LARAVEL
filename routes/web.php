@@ -6,7 +6,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 Route::get('/dashboard', DashboardController::class)
@@ -50,6 +50,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Audit Logs Routes
     Route::get('/audit-logs', [\App\Http\Controllers\AuditLogController::class, 'index'])->name('audit-logs.index');
     Route::get('/audit-logs/export', [\App\Http\Controllers\AuditLogController::class, 'export'])->name('audit-logs.export');
+
+    // Settings Routes
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\SettingsController::class, 'index'])->name('index');
+
+        // User Management (Admin only)
+        Route::get('/users', [\App\Http\Controllers\SettingsController::class, 'users'])->name('users');
+        Route::post('/users', [\App\Http\Controllers\SettingsController::class, 'storeUser'])->name('users.store');
+        Route::put('/users/{user}', [\App\Http\Controllers\SettingsController::class, 'updateUser'])->name('users.update');
+        Route::delete('/users/{user}', [\App\Http\Controllers\SettingsController::class, 'destroyUser'])->name('users.destroy');
+
+        // Profile Settings (All users)
+        Route::get('/profile', [\App\Http\Controllers\SettingsController::class, 'profile'])->name('profile');
+        Route::post('/profile', [\App\Http\Controllers\SettingsController::class, 'updateProfile'])->name('profile.update');
+
+        // Water Rate Settings (Admin only)
+        Route::get('/rates', [\App\Http\Controllers\SettingsController::class, 'rates'])->name('rates');
+        Route::post('/rates', [\App\Http\Controllers\SettingsController::class, 'updateRates'])->name('rates.update');
+    });
 
     // User Management Routes
     Route::resource('users', \App\Http\Controllers\UserController::class)->except(['show']);

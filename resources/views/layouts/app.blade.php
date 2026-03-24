@@ -26,54 +26,61 @@
 </head>
 
 <body x-data="{ sidebarOpen: false }"
-    class="font-sans antialiased bg-slate-100 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+    class="font-sans antialiased bg-slate-50 text-slate-900 cursor-default">
     @php
         use Illuminate\Support\Str;
     @endphp
-    <div class="min-h-screen lg:flex">
+    <div class="min-h-screen">
         <!-- Mobile overlay -->
         <div x-cloak x-show="sidebarOpen" @click="sidebarOpen = false"
             class="fixed inset-0 z-30 bg-slate-900/70 backdrop-blur-sm lg:hidden"></div>
 
-        <!-- Sidebar -->
-        <aside x-cloak :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
-            class="fixed inset-y-0 z-40 flex w-72 flex-col bg-[#0f172a] px-3 py-4 text-white shadow-2xl transition duration-200 ease-in-out lg:fixed lg:inset-y-0 lg:left-0 lg:overflow-y-auto">
+        <!-- Sidebar: always visible on lg+, slide-in on mobile -->
+        <aside
+            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+            class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-white border-r border-slate-100 text-slate-700 shadow-sm transition-transform duration-200 ease-in-out overflow-y-auto">
             @include('layouts.navigation')
         </aside>
 
-
-        <!-- Main content -->
-        <div class="flex-1 lg:ml-72">
+        <!-- Main content wrapper — offset by sidebar width on lg -->
+        <div class="lg:pl-64 min-h-screen flex flex-col">
             <header
-                class="sticky top-0 z-20 border-b border-slate-200 bg-white/80 px-4 py-4 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 lg:px-10">
-                <div class="flex items-center justify-between gap-4">
-                    <div class="flex items-center gap-3">
-                    </div>
-                    <a href="{{ route('profile.edit') }}"
-                        class="flex items-center gap-3 rounded-2xl border border-slate-700 bg-slate-800 px-4 py-2 text-sm shadow-sm transition hover:border-slate-600 hover:bg-slate-900">
+                class="sticky top-0 z-20 border-b border-slate-200 bg-white/80 px-4 py-4 backdrop-blur lg:px-10">
+                <div class="flex items-center justify-end gap-4 w-full">
+                    <a href="{{ route('settings.profile') }}"
+                        class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm shadow-sm transition hover:border-blue-200 hover:bg-blue-50/50 hover:shadow-md group">
                         <div class="text-right leading-tight">
-                            <p class="text-xs uppercase tracking-wide text-slate-400">Signed in as</p>
-                            <p class="text-sm font-semibold text-slate-900 dark:text-white">
+                            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Signed in as</p>
+                            <p class="text-sm font-bold text-slate-900">
                                 {{ Auth::user()->name ?? 'User' }}
                             </p>
+                            <p class="text-[10px] text-slate-400 capitalize">{{ Auth::user()->role ?? 'staff' }}</p>
                         </div>
-                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-white">
-                            <span class="text-sm font-semibold">
-                                {{ Str::upper(Str::substr(Auth::user()->name ?? 'U', 0, 1)) }}
-                            </span>
-                        </div>
+                        {{-- Profile photo or fallback initial avatar --}}
+                        @if(Auth::user()->profile_photo && file_exists(public_path('storage/' . Auth::user()->profile_photo)))
+                            <img
+                                src="{{ asset('storage/' . Auth::user()->profile_photo) }}"
+                                alt="{{ Auth::user()->name }}"
+                                class="h-10 w-10 rounded-full object-cover ring-2 ring-blue-100 group-hover:ring-blue-300 transition-all duration-200 shadow-sm"
+                            >
+                        @else
+                            <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white ring-2 ring-blue-100 group-hover:ring-blue-300 transition-all duration-200 shadow-sm">
+                                <span class="text-sm font-extrabold leading-none">
+                                    {{ Str::upper(Str::substr(Auth::user()->name ?? 'U', 0, 1)) }}
+                                </span>
+                            </div>
+                        @endif
                     </a>
                 </div>
                 @isset($header)
                     <div
-                        class="mt-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                        class="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
                         {{ $header }}
                     </div>
                 @endisset
             </header>
 
-            <main
-                class="min-h-screen bg-slate-100 px-4 py-8 dark:bg-slate-900 sm:px-6 lg:px-10 transition-all duration-300 ease-in-out">
+            <main class="flex-1 bg-slate-50 px-4 py-8 sm:px-6 lg:px-8 overflow-x-hidden">
                 @yield('content')
             </main>
         </div>
