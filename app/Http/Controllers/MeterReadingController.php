@@ -6,6 +6,7 @@ use App\Models\Consumer;
 use App\Models\MeterReading;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class MeterReadingController extends Controller
 {
@@ -46,9 +47,71 @@ class MeterReadingController extends Controller
     {
         $consumers = Consumer::where('connection_status', 'active')
             ->orderBy('first_name')
-            ->get();
+            ->get()
+            ->map(function ($consumer) {
+                $hasReadingThisMonth = MeterReading::where('consumer_id', $consumer->id)
+                    ->whereYear('reading_date', now()->year)
+                    ->whereMonth('reading_date', now()->month)
+                    ->exists();
+
+                return [
+                    'id' => $consumer->id,
+                    'full_name' => $consumer->first_name . ' ' . $consumer->last_name,
+                    'first_name' => $consumer->first_name,
+                    'last_name' => $consumer->last_name,
+                    'account_number' => $consumer->account_number,
+                    'meter_number' => $consumer->meter_number ?? 'N/A',
+                    'connection_type' => $consumer->connection_type,
+                    'location' => trim(($consumer->address_line_1 ?? '') . ($consumer->city ? ', ' . $consumer->city : '')),
+                    'has_reading_this_month' => $hasReadingThisMonth,
+                ];
+            });
 
         return view('meter-readings.create', compact('consumers'));
+    }
+
+    /**
+     * AJAX: Search consumers for autocomplete.
+     */
+    public function searchConsumers(Request $request)
+    {
+        $query = $request->get('q', '');
+
+        if (strlen($query) < 1) {
+            return response()->json([]);
+        }
+
+        $consumers = Consumer::where('connection_status', 'active')
+            ->where(function ($q) use ($query) {
+                $q->where('first_name', 'like', "%{$query}%")
+                    ->orWhere('last_name', 'like', "%{$query}%")
+                    ->orWhere('account_number', 'like', "%{$query}%")
+                    ->orWhere('meter_number', 'like', "%{$query}%")
+                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$query}%"]);
+            })
+            ->select('id', 'first_name', 'last_name', 'account_number', 'meter_number', 'connection_type', 'address_line_1', 'city')
+            ->orderBy('first_name')
+            ->limit(10)
+            ->get()
+            ->map(function ($consumer) {
+                // Check if consumer already has reading this month
+                $hasReadingThisMonth = MeterReading::where('consumer_id', $consumer->id)
+                    ->whereYear('reading_date', now()->year)
+                    ->whereMonth('reading_date', now()->month)
+                    ->exists();
+
+                return [
+                    'id' => $consumer->id,
+                    'full_name' => $consumer->first_name . ' ' . $consumer->last_name,
+                    'account_number' => $consumer->account_number,
+                    'meter_number' => $consumer->meter_number ?? 'N/A',
+                    'connection_type' => $consumer->connection_type,
+                    'location' => $consumer->address_line_1 . ($consumer->city ? ', ' . $consumer->city : ''),
+                    'has_reading_this_month' => $hasReadingThisMonth,
+                ];
+            });
+
+        return response()->json($consumers);
     }
 
     /**
@@ -103,6 +166,12 @@ class MeterReadingController extends Controller
 
             DB::commit();
 
+            // Check if "Save & Next" was requested
+            if ($request->has('save_and_next')) {
+                return redirect()->route('meter-readings.create')
+                    ->with('success', 'Meter reading recorded for ' . $consumer->first_name . ' ' . $consumer->last_name . '. You can now enter the next reading.');
+            }
+
             return redirect()->route('meter-readings.index')
                 ->with('success', 'Meter reading recorded successfully.');
 
@@ -147,7 +216,7 @@ class MeterReadingController extends Controller
         if ($validated['current_reading'] < $meterReading->previous_reading) {
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Current reading cannot be less than previous reading (' . number_format($meterReading->previous_reading, 2) . ' m³)');
+                ->with('error', 'Current reading cannot be less than previous reading (' . number_format((float) $meterReading->previous_reading, 2) . ' m³)');
         }
 
         $consumption = max($validated['current_reading'] - $meterReading->previous_reading, 0);

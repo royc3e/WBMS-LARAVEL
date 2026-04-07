@@ -89,20 +89,42 @@ class ConsumerController extends Controller
      */
     public function show(Consumer $consumer)
     {
-        $bills = $consumer->bills ?? collect();
-        $payments = $consumer->payments ?? collect();
+        // Load relationships
+        $consumer->load(['billings.payments', 'latestServiceStatus.processedBy']);
 
-        $outstandingBalance = $bills->sum('amount') - $payments->sum('amount');
-        $lastBill = $bills->isNotEmpty() ? $bills->sortByDesc('billing_date')->first() : null;
-        $recentActivity = $consumer->activity ? $consumer->activity()->latest()->take(5)->get() : collect();
+        // Get billing data
+        $bills = $consumer->billings ?? collect();
+
+        // Calculate outstanding balance from unpaid/overdue billings
+        $outstandingBalance = $consumer->billings
+            ->whereIn('status', ['pending', 'overdue'])
+            ->sum(function ($billing) {
+                $paid = $billing->payments->sum('amount');
+                return max($billing->amount - $paid, 0);
+            });
+
+        // Count unpaid bills
+        $unpaidBillsCount = $consumer->billings
+            ->whereIn('status', ['pending', 'overdue'])
+            ->count();
+
+        $lastBill = $bills->isNotEmpty() ? $bills->sortByDesc('billing_month')->first() : null;
+
+        // Service status history (last 10 entries)
+        $serviceStatusHistory = $consumer->serviceStatuses()
+            ->with('processedBy')
+            ->orderByDesc('status_date')
+            ->limit(10)
+            ->get();
 
         return view('consumers.show', [
             'consumer' => $consumer,
             'bills' => $bills,
-            'payments' => $payments,
+            'payments' => collect(), // payments are loaded through billings
             'outstandingBalance' => $outstandingBalance,
+            'unpaidBillsCount' => $unpaidBillsCount,
             'lastBill' => $lastBill,
-            'recentActivity' => $recentActivity,
+            'serviceStatusHistory' => $serviceStatusHistory,
         ]);
     }
 

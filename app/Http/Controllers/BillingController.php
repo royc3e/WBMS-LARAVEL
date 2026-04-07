@@ -122,6 +122,7 @@ class BillingController extends Controller
 
         DB::beginTransaction();
         try {
+            /** @var \App\Models\Consumer $consumer */
             foreach ($activeConsumers as $consumer) {
                 // Skip if connection_type is null
                 if (!$consumer->connection_type) {

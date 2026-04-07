@@ -83,6 +83,22 @@ class Consumer extends Model
     }
 
     /**
+     * Get the service status history for the consumer.
+     */
+    public function serviceStatuses(): HasMany
+    {
+        return $this->hasMany(ServiceStatus::class);
+    }
+
+    /**
+     * Get the latest service status change.
+     */
+    public function latestServiceStatus()
+    {
+        return $this->hasOne(ServiceStatus::class)->latestOfMany('status_date');
+    }
+
+    /**
      * Get the active billings for the consumer.
      */
     public function activeBillings()
