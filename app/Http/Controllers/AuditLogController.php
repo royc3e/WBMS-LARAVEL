@@ -19,7 +19,6 @@ class AuditLogController extends Controller
         $dateFrom = $request->get('date_from', '');
         $dateTo = $request->get('date_to', '');
         $userId = $request->get('user_id', '');
-        $view = $request->get('view', 'system'); // 'system' or 'consumers'
 
         $query = AuditLog::with('user')
             ->orderBy('date_time', 'desc');
@@ -71,9 +70,6 @@ class AuditLogController extends Controller
         // Statistics
         $stats = $this->getStatistics();
 
-        // Consumer Ledger Data
-        $consumerLedger = $this->getConsumerLedger($request);
-
         return view('audit-logs.index', compact(
             'logs',
             'actionTypes',
@@ -83,9 +79,7 @@ class AuditLogController extends Controller
             'action',
             'dateFrom',
             'dateTo',
-            'userId',
-            'view',
-            'consumerLedger'
+            'userId'
         ));
     }
 
@@ -195,96 +189,5 @@ class AuditLogController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
-    /**
-     * Get consumer ledger data.
-     */
-    private function getConsumerLedger(Request $request)
-    {
-        $search = $request->get('consumer_search', '');
-
-        $query = DB::table('consumers')
-            ->select(
-                'consumers.id as consumer_id',
-                'consumers.account_number',
-                'consumers.first_name',
-                'consumers.last_name',
-                'consumers.connection_type'
-            )
-            ->where('consumers.connection_status', 'active')
-            ->orderBy('consumers.account_number');
-
-        // Search filter
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('consumers.account_number', 'like', "%{$search}%")
-                    ->orWhere('consumers.first_name', 'like', "%{$search}%")
-                    ->orWhere('consumers.last_name', 'like', "%{$search}%");
-            });
-        }
-
-        $consumers = $query->get();
-
-        // Get detailed transactions for each consumer
-        $consumerDetails = [];
-        foreach ($consumers as $consumer) {
-            $consumerDetails[$consumer->consumer_id] = $this->getConsumerTransactions($consumer->consumer_id);
-        }
-
-        return [
-            'consumers' => $consumers,
-            'details' => $consumerDetails,
-        ];
-    }
-
-    /**
-     * Get detailed transactions for a consumer.
-     */
-    private function getConsumerTransactions($consumerId)
-    {
-        $transactions = [];
-
-        // Get billings
-        $billings = DB::table('billings')
-            ->where('consumer_id', $consumerId)
-            ->orderBy('billing_month')
-            ->get();
-
-        foreach ($billings as $billing) {
-            $transactions[] = [
-                'date' => $billing->billing_month,
-                'type' => 'Bill',
-                'billing_month' => Carbon::parse($billing->billing_month)->format('M Y'),
-                'amount' => $billing->amount,
-                'payment' => 0,
-                'balance' => 0, // Will calculate later
-            ];
-
-            // Get payments for this billing
-            $payments = DB::table('payments')
-                ->where('billing_id', $billing->id)
-                ->orderBy('payment_date')
-                ->get();
-
-            foreach ($payments as $payment) {
-                $transactions[] = [
-                    'date' => $payment->payment_date,
-                    'type' => 'Payment',
-                    'billing_month' => Carbon::parse($payment->payment_date)->format('M d, Y'),
-                    'amount' => 0,
-                    'payment' => $payment->amount,
-                    'balance' => 0, // Will calculate later
-                ];
-            }
-        }
-
-        // Calculate running balance
-        $balance = 0;
-        foreach ($transactions as &$transaction) {
-            $balance += $transaction['amount'] - $transaction['payment'];
-            $transaction['balance'] = $balance;
-        }
-
-        return $transactions;
-    }
 }
 

@@ -49,9 +49,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Payment Management Routes
     Route::get('/payments', [\App\Http\Controllers\PaymentController::class, 'index'])->name('payments.index');
 
-    // Accounts Ledger Routes
-    Route::get('/billing/ledger', [BillingController::class, 'ledgerIndex'])->name('billing.ledger');
-    Route::get('/billing/ledger/{consumer}', [BillingController::class, 'ledgerShow'])->name('billing.ledger.show');
 
     // Settings Routes
     Route::prefix('settings')->name('settings.')->group(function () {

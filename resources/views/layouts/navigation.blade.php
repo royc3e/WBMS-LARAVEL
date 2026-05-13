@@ -10,7 +10,6 @@
             'submenu' => [
                 ['label' => 'Billing Page',    'route' => 'billings.index',    'icon' => 'document-text'],
                 ['label' => 'Payment Page',    'route' => 'payments.index',    'icon' => 'credit-card'],
-                ['label' => 'Accounts Ledger', 'route' => 'billing.ledger',    'icon' => 'clipboard-document-list'],
             ]
         ],
         ['label' => 'Settings', 'route' => 'settings.index', 'icon' => 'cog-6-tooth'],
@@ -58,12 +57,12 @@
                                 break;
                             }
                         }
-                        // Also keep "Billing & Payments" open when on any billings.* or billing.* sub-page
-                        // (e.g. billings.payments.create, billings.show, billing.ledger)
+                        // Also keep "Billing & Payments" open when on any billings.* or payments.* sub-page
+                        // (e.g. billings.payments.create, billings.show)
                         if (!$hasActiveSubmenu && isset($link['dropdown']) && $link['dropdown']) {
                             $billingRoutes = array_column($link['submenu'], 'route');
-                            if (in_array('billings.index', $billingRoutes) || in_array('payments.index', $billingRoutes) || in_array('billing.ledger', $billingRoutes)) {
-                                if (request()->routeIs('billings.*') || request()->routeIs('payments.*') || request()->routeIs('billing.ledger*')) {
+                            if (in_array('billings.index', $billingRoutes) || in_array('payments.index', $billingRoutes)) {
+                                if (request()->routeIs('billings.*') || request()->routeIs('payments.*')) {
                                     $hasActiveSubmenu = true;
                                 }
                             }

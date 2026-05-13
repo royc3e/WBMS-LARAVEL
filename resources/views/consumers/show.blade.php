@@ -162,7 +162,7 @@
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                     <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Recent Billings</h2>
-                    <a href="{{ route('billing.ledger.show', $consumer) }}" class="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors">View Ledger →</a>
+                    <a href="{{ route('billings.index', ['search' => $consumer->account_number]) }}" class="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors">View All Billings →</a>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-slate-100">
