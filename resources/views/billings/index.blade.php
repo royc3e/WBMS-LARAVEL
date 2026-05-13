@@ -376,8 +376,6 @@
                                         <option value="">All Types</option>
                                         <option value="residential">Residential</option>
                                         <option value="commercial">Commercial</option>
-                                        <option value="industrial">Industrial</option>
-                                        <option value="government">Government</option>
                                     </select>
                                 </div>
                                 <div

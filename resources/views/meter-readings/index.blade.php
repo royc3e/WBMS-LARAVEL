@@ -168,7 +168,7 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
-                                        {{ number_format($reading->previous_reading, 2) }} m³
+                                        {{ number_format($reading->accurate_previous_reading, 2) }} m³
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white">
                                         {{ number_format($reading->current_reading, 2) }} m³
@@ -180,7 +180,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                             </svg>
-                                            {{ number_format($reading->consumption, 2) }} m³
+                                            {{ number_format($reading->accurate_consumption, 2) }} m³
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">

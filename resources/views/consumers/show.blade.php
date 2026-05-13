@@ -93,8 +93,7 @@
                             <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold
                                 {{ $consumer->connection_type === 'residential' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
                                    ($consumer->connection_type === 'commercial' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
-                                   ($consumer->connection_type === 'industrial' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
-                                   'bg-purple-50 text-purple-700 border border-purple-100')) }}">
+                                   'bg-gray-50 text-gray-700 border border-gray-100') }}">
                                 {{ $consumer->connection_type ? ucfirst($consumer->connection_type) : 'N/A' }}
                             </span>
                         </div>

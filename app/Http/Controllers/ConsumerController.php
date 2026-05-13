@@ -221,7 +221,7 @@ class ConsumerController extends Controller
             'city' => 'required|string|max:100',
             'state' => 'required|string|max:100',
             'postal_code' => 'required|string|max:20',
-            'connection_type' => 'required|in:residential,commercial,industrial,government',
+            'connection_type' => 'required|in:residential,commercial',
             'connection_status' => 'required|in:active,inactive,disconnected,pending',
             'meter_number' => [
                 'nullable',
@@ -242,8 +242,6 @@ class ConsumerController extends Controller
         return [
             'residential' => 'Residential',
             'commercial' => 'Commercial',
-            'industrial' => 'Industrial',
-            'government' => 'Government',
         ];
     }
 

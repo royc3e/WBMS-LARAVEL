@@ -51,8 +51,6 @@
                         @foreach([
                             'residential' => 'Residential',
                             'commercial' => 'Commercial',
-                            'industrial' => 'Industrial',
-                            'government' => 'Government',
                         ] as $value => $label)
                             <option value="{{ $value }}" {{ old('connection_type', $consumer->connection_type ?? '') == $value ? 'selected' : '' }}>
                                 {{ $label }}

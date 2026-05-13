@@ -65,12 +65,8 @@
                         <p class="font-semibold mb-1">If consumption > Minimum Consumption:</p>
                         <p class="ml-4 mb-1">→ Residential: ₱{{ $rates['minimum_rate']->value ?? 200 }} + (Excess ×
                             ₱{{ $rates['residential_excess_rate']->value ?? 15 }})</p>
-                        <p class="ml-4 mb-1">→ Commercial: ₱{{ $rates['minimum_rate']->value ?? 200 }} + (Excess ×
+                        <p class="ml-4">→ Commercial: ₱{{ $rates['minimum_rate']->value ?? 200 }} + (Excess ×
                             ₱{{ $rates['commercial_excess_rate']->value ?? 20 }})</p>
-                        <p class="ml-4 mb-1">→ Industrial: ₱{{ $rates['minimum_rate']->value ?? 200 }} + (Excess ×
-                            ₱{{ $rates['industrial_excess_rate']->value ?? 25 }})</p>
-                        <p class="ml-4">→ Government: ₱{{ $rates['minimum_rate']->value ?? 200 }} + (Excess ×
-                            ₱{{ $rates['government_excess_rate']->value ?? 12 }})</p>
                     </div>
                 </div>
             </div>
@@ -181,51 +177,7 @@
                             {{ $rates['commercial_excess_rate']->description ?? 'Rate per cubic meter beyond minimum' }}</p>
                     </div>
 
-                    <!-- Industrial -->
-                    <div
-                        class="p-4 border-2 border-orange-200 dark:border-orange-800 rounded-lg bg-orange-50 dark:bg-orange-900/20">
-                        <label for="industrial_excess_rate"
-                            class="block text-sm font-medium text-orange-900 dark:text-orange-300 mb-2 flex items-center">
-                            <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-                            </svg>
-                            Industrial Rate (per m³)
-                        </label>
-                        <div class="relative">
-                            <span
-                                class="absolute left-4 top-1/2 transform -translate-y-1/2 text-orange-600 dark:text-orange-400">₱</span>
-                            <input type="number" name="industrial_excess_rate" id="industrial_excess_rate"
-                                value="{{ old('industrial_excess_rate', $rates['industrial_excess_rate']->value ?? 25) }}"
-                                step="0.01" min="0" required
-                                class="block w-full pl-8 pr-4 py-3 border border-orange-300 dark:border-orange-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-orange-900/30 dark:text-white">
-                        </div>
-                        <p class="mt-1 text-xs text-orange-700 dark:text-orange-400">
-                            {{ $rates['industrial_excess_rate']->description ?? 'Rate per cubic meter beyond minimum' }}</p>
-                    </div>
 
-                    <!-- Government -->
-                    <div
-                        class="p-4 border-2 border-green-200 dark:border-green-800 rounded-lg bg-green-50 dark:bg-green-900/20">
-                        <label for="government_excess_rate"
-                            class="block text-sm font-medium text-green-900 dark:text-green-300 mb-2 flex items-center">
-                            <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
-                            </svg>
-                            Government Rate (per m³)
-                        </label>
-                        <div class="relative">
-                            <span
-                                class="absolute left-4 top-1/2 transform -translate-y-1/2 text-green-600 dark:text-green-400">₱</span>
-                            <input type="number" name="government_excess_rate" id="government_excess_rate"
-                                value="{{ old('government_excess_rate', $rates['government_excess_rate']->value ?? 12) }}"
-                                step="0.01" min="0" required
-                                class="block w-full pl-8 pr-4 py-3 border border-green-300 dark:border-green-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-green-900/30 dark:text-white">
-                        </div>
-                        <p class="mt-1 text-xs text-green-700 dark:text-green-400">
-                            {{ $rates['government_excess_rate']->description ?? 'Rate per cubic meter beyond minimum' }}</p>
-                    </div>
                 </div>
             </div>
 

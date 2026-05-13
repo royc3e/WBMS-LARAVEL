@@ -90,7 +90,7 @@ class BillingController extends Controller
         $validated = $request->validate([
             'billing_month' => 'required|date_format:Y-m',
             'due_date' => 'required|date|after:today',
-            'connection_type' => 'nullable|in:residential,commercial,industrial,government',
+            'connection_type' => 'nullable|in:residential,commercial',
         ]);
 
         $ratePerUnit = (float) config('billing.default_rate_per_unit', 25.00);

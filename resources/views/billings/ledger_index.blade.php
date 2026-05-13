@@ -54,8 +54,6 @@
                     <option value="">All Connection Types</option>
                     <option value="residential" {{ $connectionType === 'residential' ? 'selected' : '' }}>Residential</option>
                     <option value="commercial" {{ $connectionType === 'commercial' ? 'selected' : '' }}>Commercial</option>
-                    <option value="industrial" {{ $connectionType === 'industrial' ? 'selected' : '' }}>Industrial</option>
-                    <option value="institutional" {{ $connectionType === 'institutional' ? 'selected' : '' }}>Institutional</option>
                 </select>
                 <select name="status" class="text-sm rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-600 focus:ring-2 focus:ring-blue-500">
                     <option value="">All Status</option>

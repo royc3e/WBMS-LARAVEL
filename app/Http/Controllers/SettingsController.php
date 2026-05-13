@@ -195,8 +195,6 @@ class SettingsController extends Controller
             'minimum_consumption' => 'required|numeric|min:0',
             'residential_excess_rate' => 'required|numeric|min:0',
             'commercial_excess_rate' => 'required|numeric|min:0',
-            'industrial_excess_rate' => 'required|numeric|min:0',
-            'government_excess_rate' => 'required|numeric|min:0',
         ]);
 
         DB::beginTransaction();

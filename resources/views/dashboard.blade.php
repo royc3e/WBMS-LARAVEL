@@ -54,6 +54,26 @@
             $monthlyRevenue = \App\Models\Payment::whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year)
                 ->sum('amount');
+                
+            $recentPayments = \App\Models\Payment::with(['billing.consumer'])->latest()->take(5)->get()->map(function($p) {
+                return [
+                    'icon_bg' => 'bg-emerald-100', 'icon_color' => 'text-emerald-600', 'icon' => 'check',
+                    'type' => 'Payment Received', 'amount' => '₱' . number_format($p->amount, 2), 'amount_color' => 'text-emerald-600',
+                    'name' => $p->billing->consumer->full_name ?? 'Unknown', 'time' => $p->created_at->diffForHumans(),
+                    'acc' => '#' . ($p->billing->consumer->account_number ?? 'N/A'),
+                    'date' => $p->created_at
+                ];
+            });
+            $recentBillings = \App\Models\Billing::with(['consumer'])->latest()->take(5)->get()->map(function($b) {
+                return [
+                    'icon_bg' => 'bg-rose-100', 'icon_color' => 'text-rose-600', 'icon' => 'document',
+                    'type' => 'Bill Generated', 'amount' => '-₱' . number_format($b->amount, 2), 'amount_color' => 'text-rose-600',
+                    'name' => $b->consumer->full_name ?? 'Unknown', 'time' => $b->created_at->diffForHumans(),
+                    'acc' => '#' . ($b->consumer->account_number ?? 'N/A'),
+                    'date' => $b->created_at
+                ];
+            });
+            $recentTransactions = $recentPayments->concat($recentBillings)->sortByDesc('date')->take(5);
         @endphp
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -243,40 +263,7 @@
             </div>
         </div>
 
-        {{-- ================================================ --}}
-        {{-- MAIN CONTENT: Chart + Recent Transactions --}}
-        {{-- ================================================ --}}
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {{-- Visual Bar Chart (CSS-only) --}}
-                <div class="h-52 flex items-end justify-between gap-2 px-2 mb-3">
-                    @foreach([['Oct', '65', 'bg-blue-200'], ['Nov', '80', 'bg-blue-300'], ['Dec', '72', 'bg-blue-400'], ['Jan', '88', 'bg-blue-500'], ['Feb', '75', 'bg-blue-400'], ['Mar', '95', 'bg-blue-600']] as [$month, $height, $color])
-                        <div class="flex-1 flex flex-col items-center gap-1">
-                            <span class="text-[10px] font-bold text-slate-400">{{ $month }}</span>
-                            <div class="w-full rounded-t-lg {{ $color }} transition-all duration-500 hover:opacity-80"
-                                style="height: {{ $height }}%;"></div>
-                        </div>
-                    @endforeach
-                </div>
-
-                <div class="grid grid-cols-3 gap-3 mt-4">
-                    <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">This Month</p>
-                        <p class="text-lg font-extrabold text-slate-800 mt-0.5">₱248,750</p>
-                        <p class="text-xs text-emerald-500 font-semibold mt-0.5">+8.2% vs last</p>
-                    </div>
-                    <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Avg. Growth</p>
-                        <p class="text-lg font-extrabold text-slate-800 mt-0.5">5.8%</p>
-                        <p class="text-xs text-slate-400 mt-0.5">Consistent trend</p>
-                    </div>
-                    <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Water Saved</p>
-                        <p class="text-lg font-extrabold text-slate-800 mt-0.5">12,450 m³</p>
-                        <p class="text-xs text-emerald-500 font-semibold mt-0.5">+15% efficiency</p>
-                    </div>
-                </div>
-            </div>
-
+        <div class="mt-8">
             {{-- Recent Transactions --}}
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
                 <div class="flex items-center justify-between mb-5">
@@ -289,47 +276,34 @@
                 </div>
 
                 <div class="space-y-4">
-                    @foreach([
-                                ['icon_bg' => 'bg-emerald-100', 'icon_color' => 'text-emerald-600', 'type' => 'Payment Received', 'amount' => '₱2,450.00', 'amount_color' => 'text-emerald-600', 'name' => 'Juan Dela Cruz', 'time' => '2 hours ago', 'acc' => '#2026-00123', 'icon' => 'check'],
-                                ['icon_bg' => 'bg-rose-100', 'icon_color' => 'text-rose-600', 'type' => 'Bill Generated', 'amount' => '-₱1,875.00', 'amount_color' => 'text-rose-600', 'name' => 'Maria Santos', 'time' => '5 hours ago', 'acc' => '#2026-00456', 'icon' => 'document'],
-                                ['icon_bg' => 'bg-amber-100', 'icon_color' => 'text-amber-600', 'type' => 'Payment Pending', 'amount' => '₱3,210.00', 'amount_color' => 'text-amber-600', 'name' => 'Pedro Reyes', 'time' => '1 day ago', 'acc' => '#2026-00321', 'icon' => 'clock'],
-                                ['icon_bg' => 'bg-blue-100', 'icon_color' => 'text-blue-600', 'type' => 'Account Created', 'amount' => 'New', 'amount_color' => 'text-blue-600', 'name' => 'Ana Torres', 'time' => '2 days ago', 'acc' => '#2026-00987', 'icon' => 'user'],
-                            ] as $tx)
+                    @forelse($recentTransactions as $tx)
                         <div class="flex items-start gap-3">
-
-
-
-                                                               <div class="flex-shrink-0 h-9 w-9 rounded-xl {{ $tx['icon_bg'] }} {{ $tx['icon_color'] }} flex items-center justify-center">
+                            <div class="flex-shrink-0 h-9 w-9 rounded-xl {{ $tx['icon_bg'] }} {{ $tx['icon_color'] }} flex items-center justify-center">
                                 @if($tx['icon'] === 'check')
-
-
-
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
                                 @elseif($tx['icon'] === 'document')
-
-
-
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                 @elseif($tx['icon'] === 'clock')
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    @else
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                                    @endif
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center justify-between gap-2">
-                                        <p class="text-sm font-semibold text-slate-800 truncate">{{ $tx['type'] }}</p>
-                                        <p class="text-sm font-bold {{ $tx['amount_color'] }} flex-shrink-0">{{ $tx['amount'] }}</p>
-                                    </div>
-                                    <p class="text-xs text-slate-500">{{ $tx['name'] }} &bull; {{ $tx['time'] }}</p>
-                                    <p class="text-xs text-slate-400">Acc {{ $tx['acc'] }}</p>
-                                </div>
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                @else
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                @endif
                             </div>
-
-                       @endforeach
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="text-sm font-semibold text-slate-800 truncate">{{ $tx['type'] }}</p>
+                                    <p class="text-sm font-bold {{ $tx['amount_color'] }} flex-shrink-0">{{ $tx['amount'] }}</p>
+                                </div>
+                                <p class="text-xs text-slate-500">{{ $tx['name'] }} &bull; {{ $tx['time'] }}</p>
+                                <p class="text-xs text-slate-400">Acc {{ $tx['acc'] }}</p>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center py-4 text-sm text-slate-500">
+                            No recent transactions found.
+                        </div>
+                    @endforelse
                 </div>
-
-
 
                 <div class="mt-5 pt-4 border-t border-slate-100 text-center">
                     <a href="{{ route('payments.index') }}" class="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">
@@ -338,6 +312,7 @@
                     </a>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 @endsection

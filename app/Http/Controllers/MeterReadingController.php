@@ -19,7 +19,8 @@ class MeterReadingController extends Controller
         $month = $request->get('month', '');
 
         $query = MeterReading::with(['consumer', 'recordedBy'])
-            ->orderBy('reading_date', 'desc');
+            ->orderBy('reading_date', 'desc')
+            ->orderBy('created_at', 'desc');
 
         if ($search) {
             $query->whereHas('consumer', function ($q) use ($search) {
@@ -139,6 +140,19 @@ class MeterReadingController extends Controller
             $currentReading = $validated['current_reading'];
             $consumption = max($currentReading - $previousReading, 0);
 
+            // Check for duplicate reading in the same billing period
+            $readingDate = \Carbon\Carbon::parse($validated['reading_date']);
+            $duplicateExists = MeterReading::where('consumer_id', $consumer->id)
+                ->whereYear('reading_date', $readingDate->year)
+                ->whereMonth('reading_date', $readingDate->month)
+                ->exists();
+
+            if ($duplicateExists) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'A meter reading for ' . $readingDate->format('F Y') . ' already exists for this consumer. Only one reading per billing period is allowed.');
+            }
+
             // Validate that current reading is not less than previous
             if ($currentReading < $previousReading) {
                 return redirect()->back()
@@ -212,14 +226,17 @@ class MeterReadingController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
+        // Fetch the accurate previous reading dynamically based on chronological date
+        $accuratePreviousReading = $meterReading->accurate_previous_reading;
+
         // Validate that current reading is not less than previous
-        if ($validated['current_reading'] < $meterReading->previous_reading) {
+        if ($validated['current_reading'] < $accuratePreviousReading) {
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Current reading cannot be less than previous reading (' . number_format((float) $meterReading->previous_reading, 2) . ' m³)');
+                ->with('error', 'Current reading cannot be less than previous reading (' . number_format((float) $accuratePreviousReading, 2) . ' m³)');
         }
 
-        $consumption = max($validated['current_reading'] - $meterReading->previous_reading, 0);
+        $consumption = max($validated['current_reading'] - $accuratePreviousReading, 0);
 
         $meterReading->update([
             'current_reading' => $validated['current_reading'],
@@ -269,10 +286,20 @@ class MeterReadingController extends Controller
             ->orderBy('reading_date', 'desc')
             ->first();
 
+        // Check if a reading already exists for the current billing period
+        $hasReadingThisPeriod = MeterReading::where('consumer_id', $consumer->id)
+            ->whereYear('reading_date', now()->year)
+            ->whereMonth('reading_date', now()->month)
+            ->exists();
+
         return response()->json([
             'consumer' => $consumer,
             'previous_reading' => $latestReading?->current_reading ?? 0,
+            'has_previous_reading' => $latestReading !== null,
+            'last_reading_date' => $latestReading?->reading_date?->format('M d, Y'),
+            'last_reading_consumption' => $latestReading?->consumption ?? 0,
             'meter_number' => $consumer->meter_number,
+            'has_reading_this_period' => $hasReadingThisPeriod,
         ]);
     }
 

@@ -20,9 +20,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Meter Readings Routes
     Route::get('meter-readings/search-consumers', [\App\Http\Controllers\MeterReadingController::class, 'searchConsumers'])
         ->name('meter-readings.search-consumers');
-    Route::resource('meter-readings', \App\Http\Controllers\MeterReadingController::class);
     Route::get('meter-readings/consumer/{consumer}', [\App\Http\Controllers\MeterReadingController::class, 'getConsumerDetails'])
         ->name('meter-readings.consumer-details');
+    Route::resource('meter-readings', \App\Http\Controllers\MeterReadingController::class);
 
     // Consumer routes are now in consumers.php
     Route::view('/rates-charges', 'dashboard')->name('rates.index');

@@ -35,7 +35,7 @@
             </div>
         @endif
 
-        <form action="{{ route('meter-readings.update', $meterReading) }}" method="POST" class="space-y-6">
+        <form id="update-reading-form" action="{{ route('meter-readings.update', $meterReading) }}" method="POST" class="space-y-6">
             @csrf
             @method('PUT')
 
@@ -65,7 +65,7 @@
                         <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Previous
                             Reading</label>
                         <p class="text-base font-bold text-blue-600 dark:text-blue-400">
-                            {{ number_format($meterReading->previous_reading, 2) }} m³</p>
+                            {{ number_format($meterReading->accurate_previous_reading, 2) }} m³</p>
                     </div>
                 </div>
             </div>
@@ -83,7 +83,7 @@
                                 Current Reading (m³) <span class="text-red-500">*</span>
                             </label>
                             <input type="number" name="current_reading" id="current_reading" step="0.01"
-                                min="{{ $meterReading->previous_reading }}" required
+                                min="{{ $meterReading->accurate_previous_reading }}" required
                                 value="{{ old('current_reading', $meterReading->current_reading) }}"
                                 class="block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
                             @error('current_reading')
@@ -118,6 +118,7 @@
                     </div>
                 </div>
             </div>
+        </form>
 
             <!-- Action Buttons -->
             <div class="flex items-center justify-between">
@@ -136,12 +137,11 @@
                         class="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
                         Cancel
                     </a>
-                    <button type="submit"
+                    <button type="submit" form="update-reading-form"
                         class="px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-lg transition-colors">
                         Update Reading
                     </button>
                 </div>
             </div>
-        </form>
     </div>
 @endsection

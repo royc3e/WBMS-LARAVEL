@@ -239,11 +239,57 @@
                                     <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold capitalize bg-blue-50 text-blue-700 border border-blue-100" x-text="consumerData?.consumer?.connection_type"></span>
                                 </div>
                             </div>
-                            <div class="p-4 bg-slate-50/50 flex flex-col justify-center min-w-[160px]">
+                            <div class="p-4 bg-slate-50/50 flex flex-col justify-center min-w-[200px]">
                                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Previous Reading</p>
-                                <div class="flex items-baseline gap-1">
-                                    <span class="text-2xl font-black text-blue-600" x-text="(consumerData?.previous_reading || 0).toFixed(2)">0.00</span>
-                                    <span class="text-sm font-bold text-blue-400">m³</span>
+                                
+                                <!-- Has Previous Reading -->
+                                <template x-if="consumerData?.has_previous_reading">
+                                    <div>
+                                        <div class="flex items-baseline gap-1">
+                                            <span class="text-2xl font-black text-blue-600" x-text="parseFloat(consumerData?.previous_reading || 0).toFixed(2)">0.00</span>
+                                            <span class="text-sm font-bold text-blue-400">m³</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 mt-1.5">
+                                            <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                            <span class="text-[10px] font-semibold text-slate-500" x-text="'Last read: ' + consumerData?.last_reading_date"></span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 mt-0.5">
+                                            <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                                            <span class="text-[10px] font-semibold text-slate-500" x-text="'Last consumption: ' + parseFloat(consumerData?.last_reading_consumption || 0).toFixed(2) + ' m³'"></span>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- No Previous Reading -->
+                                <template x-if="consumerData && !consumerData?.has_previous_reading">
+                                    <div>
+                                        <div class="flex items-baseline gap-1">
+                                            <span class="text-2xl font-black text-slate-400">0.00</span>
+                                            <span class="text-sm font-bold text-slate-300">m³</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5 mt-1.5">
+                                            <svg class="w-3 h-3 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                            <span class="text-[10px] font-bold text-amber-600">No previous reading available</span>
+                                        </div>
+                                        <p class="text-[10px] text-slate-400 mt-0.5 pl-[18px]">First reading for this consumer</p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Duplicate Billing Period Warning -->
+                        <div x-show="consumerData?.has_reading_this_period" x-cloak
+                             class="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm relative overflow-hidden">
+                            <div class="absolute right-0 top-0 h-full w-2 bg-red-400"></div>
+                            <div class="flex items-start gap-4">
+                                <div class="flex-shrink-0 mt-0.5">
+                                    <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-red-900 leading-none mb-1.5">Duplicate Billing Period</p>
+                                    <p class="text-xs font-medium text-red-700">A meter reading for <strong>{{ now()->format('F Y') }}</strong> already exists for this consumer. Only one reading per billing period is allowed.</p>
                                 </div>
                             </div>
                         </div>
@@ -323,10 +369,10 @@
                     <button type="button" @click="closeModal()" class="w-full sm:w-auto px-6 py-3 text-sm font-bold text-slate-600 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl shadow-sm transition-colors focus:ring-4 focus:ring-slate-100">
                         Cancel
                     </button>
-                    <!-- Submit button disabled if invalid reading -->
+                    <!-- Submit button disabled if invalid reading or duplicate period -->
                     <button type="submit" 
-                            :disabled="currentReading !== '' && parseFloat(currentReading) < parseFloat(consumerData?.previous_reading || 0)"
-                            :class="(currentReading !== '' && parseFloat(currentReading) < parseFloat(consumerData?.previous_reading || 0)) ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg hover:opacity-95'"
+                            :disabled="isSubmitDisabled()"
+                            :class="isSubmitDisabled() ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg hover:opacity-95'"
                             style="background: linear-gradient(to right, #0891b2, #1d4ed8);"
                             class="w-full sm:w-auto px-8 py-3 text-sm font-bold text-white rounded-xl shadow-md transition-all flex items-center justify-center gap-2 focus:ring-4 focus:ring-blue-500/30">
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
@@ -449,6 +495,17 @@ function meterReadingApp() {
         
         closeModal() {
             this.showModal = false;
+            this.consumerId = '';
+            this.selectedConsumer = null;
+            this.consumerData = null;
+            this.currentReading = '';
+            this.consumption = 0;
+            this.excessConsumption = 0;
+            this.ratePerUnit = 0;
+            this.excessCharge = 0;
+            this.totalAmount = 0;
+            this.searchQuery = '';
+            this.filteredConsumers = this.allConsumers.slice(0, 10);
         },
 
         clearSelection() {
@@ -464,10 +521,25 @@ function meterReadingApp() {
             this.showModal = false;
         },
 
+        isSubmitDisabled() {
+            // Disabled if: reading is invalid OR duplicate billing period
+            const current = parseFloat(this.currentReading);
+            const prev = parseFloat(this.consumerData?.previous_reading || 0);
+            const invalidReading = this.currentReading !== '' && current < prev;
+            const duplicatePeriod = this.consumerData?.has_reading_this_period === true;
+            return invalidReading || duplicatePeriod;
+        },
+
         handleSubmit(event) {
             if (!this.consumerId) {
                 event.preventDefault();
                 alert('Please select a consumer first.');
+                return false;
+            }
+
+            if (this.consumerData?.has_reading_this_period) {
+                event.preventDefault();
+                alert('A meter reading for this billing period already exists. Only one reading per billing period is allowed.');
                 return false;
             }
             
@@ -476,7 +548,7 @@ function meterReadingApp() {
             
             if (isNaN(current) || current < prev) {
                 event.preventDefault();
-                alert('Invalid reading! Reading cannot be lower than the previous reading.');
+                alert('Invalid reading! Reading cannot be lower than the previous reading (' + prev.toFixed(2) + ' m³).');
                 return false;
             }
             

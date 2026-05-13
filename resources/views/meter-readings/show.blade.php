@@ -71,7 +71,7 @@
                             <label class="block text-sm font-medium text-blue-700 dark:text-blue-300 mb-2">Previous
                                 Reading</label>
                             <p class="text-2xl font-bold text-blue-900 dark:text-blue-100">
-                                {{ number_format($meterReading->previous_reading, 2) }} m³</p>
+                                {{ number_format($meterReading->accurate_previous_reading, 2) }} m³</p>
                         </div>
                         <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
                             <label class="block text-sm font-medium text-green-700 dark:text-green-300 mb-2">Current
@@ -81,7 +81,7 @@
                         </div>
                         <div class="bg-gradient-to-r from-cyan-500 to-blue-600 p-4 rounded-lg">
                             <label class="block text-sm font-medium text-white mb-2">Consumption</label>
-                            <p class="text-2xl font-bold text-white">{{ number_format($meterReading->consumption, 2) }} m³
+                            <p class="text-2xl font-bold text-white">{{ number_format($meterReading->accurate_consumption, 2) }} m³
                             </p>
                         </div>
                     </div>
