@@ -384,6 +384,7 @@ class BillingController extends Controller
             'previous_reading' => 'required|numeric|min:0',
             'current_reading' => 'required|numeric|min:0|gt:previous_reading',
             'amount' => 'required|numeric|min:0',
+            'arrears' => 'nullable|numeric|min:0',
             'due_date' => 'required|date|after:today',
             'status' => 'required|in:pending,paid,overdue,cancelled',
         ]);
@@ -442,6 +443,7 @@ class BillingController extends Controller
             'previous_reading' => 'required|numeric|min:0',
             'current_reading' => 'required|numeric|min:0|gt:previous_reading',
             'amount' => 'required|numeric|min:0',
+            'arrears' => 'nullable|numeric|min:0',
             'due_date' => 'required|date',
             'status' => 'required|in:pending,paid,overdue,cancelled',
         ]);
@@ -500,7 +502,7 @@ class BillingController extends Controller
     public function processPayment(Request $request, Billing $billing)
     {
         $validated = $request->validate([
-            'amount_paid' => 'required|numeric|min:0.01|max:' . ($billing->amount - $billing->payments()->sum('amount')),
+            'amount_paid' => 'required|numeric|min:0.01|max:' . ($billing->amount + $billing->arrears - $billing->payments()->sum('amount')),
             'payment_date' => 'required|date|before_or_equal:today',
             'payment_method' => 'required|in:cash,check,online_transfer,other',
             'reference_number' => 'nullable|string|max:100',
@@ -519,7 +521,7 @@ class BillingController extends Controller
 
         // Update billing status if fully paid
         $totalPaid = $billing->payments()->sum('amount');
-        if ($totalPaid >= $billing->amount) {
+        if ($totalPaid >= ($billing->amount + $billing->arrears)) {
             $billing->update(['status' => 'paid']);
         }
 

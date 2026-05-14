@@ -169,7 +169,7 @@
                         <thead class="bg-slate-50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Month</th>
-                                <th class="px-6 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Amount</th>
+                                <th class="px-6 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Balance</th>
                                 <th class="px-6 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
                             </tr>
                         </thead>
@@ -180,7 +180,7 @@
                                     {{ \Carbon\Carbon::parse($bill->billing_month)->format('F Y') }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-slate-800">
-                                    ₱{{ number_format($bill->amount, 2) }}
+                                    ₱{{ number_format($bill->balance, 2) }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
                                     <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-lg

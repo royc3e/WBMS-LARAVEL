@@ -220,25 +220,25 @@
 
                         {{-- Payment Amount --}}
                         <div>
-                            <label for="amount" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                            <label for="amount_paid" class="block text-sm font-semibold text-slate-700 mb-1.5">
                                 Payment Amount <span class="text-red-500">*</span>
                             </label>
                             <div class="relative">
                                 <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-semibold text-sm pointer-events-none">₱</span>
                                 <input
                                     type="number"
-                                    id="amount"
-                                    name="amount"
+                                    id="amount_paid"
+                                    name="amount_paid"
                                     step="0.01"
                                     min="0.01"
                                     max="{{ number_format($billing->balance, 2, '.', '') }}"
-                                    value="{{ old('amount', number_format($billing->balance, 2, '.', '')) }}"
+                                    value="{{ old('amount_paid', number_format($billing->balance, 2, '.', '')) }}"
                                     required
-                                    class="w-full pl-8 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition @error('amount') border-red-300 @enderror"
+                                    class="w-full pl-8 pr-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition @error('amount_paid') border-red-300 @enderror"
                                 >
                             </div>
                             <p class="text-xs text-slate-400 mt-1">Max: ₱{{ number_format($billing->balance, 2) }}</p>
-                            @error('amount')
+                            @error('amount_paid')
                                 <p class="text-xs text-red-500 mt-1">{{ $message }}</p>
                             @enderror
                         </div>
@@ -410,7 +410,7 @@
         updateRefField();
 
         // Auto-clamp amount to max balance
-        const amountInput = document.getElementById('amount');
+        const amountInput = document.getElementById('amount_paid');
         amountInput.addEventListener('blur', function () {
             const max = parseFloat(this.getAttribute('max'));
             let val = parseFloat(this.value);

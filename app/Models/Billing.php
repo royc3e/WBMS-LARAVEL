@@ -25,6 +25,7 @@ class Billing extends Model
         'amount',
         'previous_balance',
         'penalty',
+        'arrears',
         'due_date',
         'status',
         'created_by',
@@ -42,6 +43,7 @@ class Billing extends Model
         'current_reading' => 'decimal:2',
         'consumption' => 'decimal:2',
         'amount' => 'decimal:2',
+        'arrears' => 'decimal:2',
         'due_date' => 'date',
     ];
 
@@ -86,7 +88,7 @@ class Billing extends Model
      */
     public function getBalanceAttribute(): float
     {
-        return (float) ($this->amount - $this->total_paid);
+        return (float) ($this->amount + $this->arrears - $this->total_paid);
     }
 
     /**

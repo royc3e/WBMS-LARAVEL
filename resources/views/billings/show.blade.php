@@ -231,6 +231,24 @@
                                     {{ number_format($billing->amount, 2) }}
                                 </td>
                             </tr>
+                            @if($billing->arrears > 0)
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                    Arrears
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+                                    {{ number_format($billing->arrears, 2) }}
+                                </td>
+                            </tr>
+                            <tr class="bg-gray-50 dark:bg-gray-700">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-white">
+                                    Total Amount Due
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900 dark:text-white">
+                                    {{ number_format($billing->amount + $billing->arrears, 2) }}
+                                </td>
+                            </tr>
+                            @endif
                             @if($billing->payments->sum('amount') > 0)
                                 <tr class="bg-green-50 dark:bg-green-900/20">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800 dark:text-green-200">

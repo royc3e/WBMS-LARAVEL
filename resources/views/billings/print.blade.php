@@ -69,6 +69,16 @@
                     <td class="px-6 py-4">Water consumption ({{ number_format($billing->consumption, 2) }} units)</td>
                     <td class="px-6 py-4 text-right">{{ number_format($billing->amount, 2) }}</td>
                 </tr>
+                @if($billing->arrears > 0)
+                <tr>
+                    <td class="px-6 py-4">Arrears</td>
+                    <td class="px-6 py-4 text-right">{{ number_format($billing->arrears, 2) }}</td>
+                </tr>
+                <tr class="font-semibold">
+                    <td class="px-6 py-4">Total Amount Due</td>
+                    <td class="px-6 py-4 text-right">{{ number_format($billing->amount + $billing->arrears, 2) }}</td>
+                </tr>
+                @endif
                 @if($billing->payments->count() > 0)
                     <tr class="bg-green-50">
                         <td class="px-6 py-4 font-medium text-green-800">Payments Received</td>
