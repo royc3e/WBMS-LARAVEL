@@ -185,10 +185,11 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
                                     <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-lg
                                         {{ $bill->status === 'paid' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                                           ($bill->status === 'partial' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
                                            ($bill->status === 'overdue' ? 'bg-red-50 text-red-700 border border-red-100' :
-                                           ($bill->status === 'cancelled' ? 'bg-slate-50 text-slate-500 border border-slate-100' :
-                                           'bg-amber-50 text-amber-700 border border-amber-100')) }}">
-                                        {{ ucfirst($bill->status) }}
+                                           ($bill->status === 'void' ? 'bg-slate-50 text-slate-500 border border-slate-100' :
+                                           'bg-amber-50 text-amber-700 border border-amber-100'))) }}">
+                                        {{ $bill->status === 'void' ? 'Void' : ($bill->status === 'partial' ? 'Partial' : ucfirst($bill->status)) }}
                                     </span>
                                 </td>
                             </tr>

@@ -67,15 +67,16 @@
                 @php
                     $statusColors = [
                         'pending'   => 'bg-yellow-50 text-yellow-700 border-yellow-200',
+                        'partial'   => 'bg-blue-50 text-blue-700 border-blue-200',
                         'overdue'   => 'bg-red-50 text-red-700 border-red-200',
                         'paid'      => 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                        'cancelled' => 'bg-slate-100 text-slate-500 border-slate-200',
+                        'void'      => 'bg-slate-100 text-slate-500 border-slate-200',
                     ];
-                    $sc = $statusColors[$billing->status] ?? $statusColors['cancelled'];
+                    $sc = $statusColors[$billing->status] ?? $statusColors['void'];
                 @endphp
                 <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full border {{ $sc }}">
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
-                    {{ ucfirst($billing->status) }}
+                    {{ $billing->status === 'void' ? 'Void' : ($billing->status === 'partial' ? 'Partial' : ucfirst($billing->status)) }}
                 </span>
             </div>
         </div>
@@ -294,7 +295,7 @@
                                 type="text"
                                 id="reference_number"
                                 name="reference_number"
-                                value="{{ old('reference_number') }}"
+                                value="{{ old('reference_number', $nextOrNumber) }}"
                                 maxlength="100"
                                 placeholder="e.g. OR-2026-00123"
                                 class="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"

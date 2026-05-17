@@ -209,7 +209,7 @@
                             class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700
                                    focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors
                                    @error('status') border-red-400 bg-red-50 @enderror">
-                        @foreach(['pending' => 'Pending', 'paid' => 'Paid', 'overdue' => 'Overdue', 'cancelled' => 'Cancelled'] as $value => $label)
+                        @foreach(['pending' => 'Pending', 'partial' => 'Partial', 'paid' => 'Paid', 'overdue' => 'Overdue', 'void' => 'Void'] as $value => $label)
                             <option value="{{ $value }}" {{ old('status', $billing->status) === $value ? 'selected' : '' }}>
                                 {{ $label }}
                             </option>

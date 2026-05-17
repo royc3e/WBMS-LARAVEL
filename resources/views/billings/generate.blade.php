@@ -91,7 +91,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="billing_month_active" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Billing month</label>
-                            <input type="month" id="billing_month_active" name="billing_month" value="{{ old('form_context') === 'active' ? old('billing_month') : '' }}" required class="mt-1 block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <input type="month" id="billing_month_active" name="billing_month" value="{{ old('billing_month', date('Y-m')) }}" required class="mt-1 block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             @error('billing_month')
                                 @if(old('form_context') === 'active')
                                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -100,7 +100,7 @@
                         </div>
                         <div>
                             <label for="due_date_active" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Due date</label>
-                            <input type="date" id="due_date_active" name="due_date" value="{{ old('form_context') === 'active' ? old('due_date') : '' }}" required class="mt-1 block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark-border-gray-600 dark-text-white">
+                            <input type="date" id="due_date_active" name="due_date" value="{{ old('due_date', date('Y-m-d', strtotime('+1 month'))) }}" required class="mt-1 block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                             @error('due_date')
                                 @if(old('form_context') === 'active')
                                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -205,7 +205,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                         <label for="billing_month_custom" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Billing month</label>
-                        <input type="month" id="billing_month_custom" name="billing_month" value="{{ old('form_context') === 'custom' ? old('billing_month') : '' }}" required class="mt-1 block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <input type="month" id="billing_month_custom" name="billing_month" value="{{ old('billing_month', date('Y-m')) }}" required class="mt-1 block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         @error('billing_month')
                             @if(old('form_context') === 'custom')
                                 <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -214,7 +214,7 @@
                     </div>
                     <div>
                         <label for="due_date_custom" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Due date</label>
-                        <input type="date" id="due_date_custom" name="due_date" value="{{ old('form_context') === 'custom' ? old('due_date') : '' }}" required class="mt-1 block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark-text-white">
+                        <input type="date" id="due_date_custom" name="due_date" value="{{ old('due_date', date('Y-m-d', strtotime('+1 month'))) }}" required class="mt-1 block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         @error('due_date')
                             @if(old('form_context') === 'custom')
                                 <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -266,4 +266,46 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const billingActive = document.getElementById('billing_month_active');
+        const dueActive = document.getElementById('due_date_active');
+        const billingCustom = document.getElementById('billing_month_custom');
+        const dueCustom = document.getElementById('due_date_custom');
+
+        function syncDueDate(billingInput, dueInput) {
+            if (!billingInput.value) return;
+            const [year, month] = billingInput.value.split('-');
+            
+            const today = new Date();
+            const currentDay = today.getDate();
+            
+            let targetMonth = parseInt(month, 10);
+            let targetYear = parseInt(year, 10);
+            
+            targetMonth += 1;
+            if (targetMonth > 12) {
+                targetMonth = 1;
+                targetYear += 1;
+            }
+            
+            const pad = (num) => String(num).padStart(2, '0');
+            const dayToUse = currentDay ? pad(currentDay) : '15';
+            dueInput.value = `${targetYear}-${pad(targetMonth)}-${dayToUse}`;
+        }
+
+        if (billingActive && dueActive) {
+            billingActive.addEventListener('change', () => syncDueDate(billingActive, dueActive));
+            if (!dueActive.value) syncDueDate(billingActive, dueActive);
+        }
+        
+        if (billingCustom && dueCustom) {
+            billingCustom.addEventListener('change', () => syncDueDate(billingCustom, dueCustom));
+            if (!dueCustom.value) syncDueDate(billingCustom, dueCustom);
+        }
+    });
+</script>
+@endpush
 @endsection

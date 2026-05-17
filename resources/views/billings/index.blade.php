@@ -135,9 +135,10 @@
                                 class="block w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
                                 <option value="">All</option>
                                 <option value="pending" {{ $status === 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="partial" {{ $status === 'partial' ? 'selected' : '' }}>Partial</option>
                                 <option value="paid" {{ $status === 'paid' ? 'selected' : '' }}>Paid</option>
                                 <option value="overdue" {{ $status === 'overdue' ? 'selected' : '' }}>Overdue</option>
-                                <option value="cancelled" {{ $status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                <option value="void" {{ $status === 'void' ? 'selected' : '' }}>Void</option>
                             </select>
                         </div>
 
@@ -257,11 +258,12 @@
                                         @php
                                             $statusConfig = [
                                                 'pending' => ['bg' => 'bg-yellow-100 dark:bg-yellow-900/30', 'text' => 'text-yellow-800 dark:text-yellow-300', 'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
+                                                'partial' => ['bg' => 'bg-blue-100 dark:bg-blue-900/30', 'text' => 'text-blue-800 dark:text-blue-300', 'icon' => 'M12 6V12H18A6 6 0 0 1 12 18A6 6 0 0 1 6 12A6 6 0 0 1 12 6'],
                                                 'paid' => ['bg' => 'bg-green-100 dark:bg-green-900/30', 'text' => 'text-green-800 dark:text-green-300', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
                                                 'overdue' => ['bg' => 'bg-red-100 dark:bg-red-900/30', 'text' => 'text-red-800 dark:text-red-300', 'icon' => 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
-                                                'cancelled' => ['bg' => 'bg-gray-100 dark:bg-gray-700', 'text' => 'text-gray-600 dark:text-gray-400', 'icon' => 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z']
+                                                'void' => ['bg' => 'bg-gray-100 dark:bg-gray-700', 'text' => 'text-gray-600 dark:text-gray-400', 'icon' => 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z']
                                             ];
-                                            $config = $statusConfig[$billing->status] ?? $statusConfig['cancelled'];
+                                            $config = $statusConfig[$billing->status] ?? $statusConfig['void'];
                                         @endphp
                                         <span
                                             class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $config['bg'] }} {{ $config['text'] }}">
@@ -277,7 +279,7 @@
                                             class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium">
                                             View
                                         </a>
-                                        @if(in_array($billing->status, ['pending', 'overdue']))
+                                        @if(in_array($billing->status, ['pending', 'overdue', 'partial']))
                                             <a href="{{ route('billings.payments.create', $billing) }}"
                                                 class="ml-3 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 transition-all duration-150">
                                                 <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -357,14 +359,14 @@
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                         Billing Month
                                     </label>
-                                    <input type="month" name="billing_month" required
+                                    <input type="month" id="batch_billing_month" name="billing_month" value="{{ old('billing_month', date('Y-m')) }}" required
                                         class="block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                         Due Date
                                     </label>
-                                    <input type="date" name="due_date" required
+                                    <input type="date" id="batch_due_date" name="due_date" value="{{ old('due_date', date('Y-m-d', strtotime('+1 month'))) }}" required
                                         class="block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
                                 </div>
                                 <div>
@@ -466,14 +468,14 @@
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                         Billing Month
                                     </label>
-                                    <input type="month" name="billing_month" required
+                                    <input type="month" id="indiv_billing_month" name="billing_month" value="{{ old('billing_month', date('Y-m')) }}" required
                                         class="block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                         Due Date
                                     </label>
-                                    <input type="date" name="due_date" required
+                                    <input type="date" id="indiv_due_date" name="due_date" value="{{ old('due_date', date('Y-m-d', strtotime('+1 month'))) }}" required
                                         class="block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
                                 </div>
                                 <div
@@ -503,4 +505,46 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const batchBilling = document.getElementById('batch_billing_month');
+            const batchDue = document.getElementById('batch_due_date');
+            const indivBilling = document.getElementById('indiv_billing_month');
+            const indivDue = document.getElementById('indiv_due_date');
+
+            function syncDueDate(billingInput, dueInput) {
+                if (!billingInput.value) return;
+                const [year, month] = billingInput.value.split('-');
+                
+                const today = new Date();
+                const currentDay = today.getDate();
+                
+                let targetMonth = parseInt(month, 10);
+                let targetYear = parseInt(year, 10);
+                
+                targetMonth += 1;
+                if (targetMonth > 12) {
+                    targetMonth = 1;
+                    targetYear += 1;
+                }
+                
+                const pad = (num) => String(num).padStart(2, '0');
+                const dayToUse = currentDay ? pad(currentDay) : '15';
+                dueInput.value = `${targetYear}-${pad(targetMonth)}-${dayToUse}`;
+            }
+
+            if (batchBilling && batchDue) {
+                batchBilling.addEventListener('change', () => syncDueDate(batchBilling, batchDue));
+                if (!batchDue.value) syncDueDate(batchBilling, batchDue);
+            }
+
+            if (indivBilling && indivDue) {
+                indivBilling.addEventListener('change', () => syncDueDate(indivBilling, indivDue));
+                if (!indivDue.value) syncDueDate(indivBilling, indivDue);
+            }
+        });
+    </script>
+    @endpush
 @endsection

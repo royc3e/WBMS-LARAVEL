@@ -24,7 +24,7 @@ class BillingController extends Controller
         $status = (string) $request->input('status', '');
         $month = (string) $request->input('month', '');
 
-        $allowedStatuses = ['pending', 'paid', 'overdue', 'cancelled'];
+        $allowedStatuses = ['pending', 'paid', 'overdue', 'void', 'partial'];
 
         $billings = Billing::with(['consumer', 'payments'])
             ->when($search !== '', function ($query) use ($search) {
@@ -386,7 +386,7 @@ class BillingController extends Controller
             'amount' => 'required|numeric|min:0',
             'arrears' => 'nullable|numeric|min:0',
             'due_date' => 'required|date|after:today',
-            'status' => 'required|in:pending,paid,overdue,cancelled',
+            'status' => 'required|in:pending,paid,overdue,void,partial',
         ]);
 
         // Calculate consumption
@@ -445,7 +445,7 @@ class BillingController extends Controller
             'amount' => 'required|numeric|min:0',
             'arrears' => 'nullable|numeric|min:0',
             'due_date' => 'required|date',
-            'status' => 'required|in:pending,paid,overdue,cancelled',
+            'status' => 'required|in:pending,paid,overdue,void,partial',
         ]);
 
         // Calculate consumption
@@ -478,6 +478,26 @@ class BillingController extends Controller
     }
 
     /**
+     * Cancel / Void the specified billing.
+     *
+     * @param  \App\Models\Billing  $billing
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function cancel(Billing $billing)
+    {
+        // Check if there are payments
+        if ($billing->payments()->exists()) {
+            return redirect()->back()
+                ->with('error', 'Cannot void a billing record that already has payments.');
+        }
+
+        $billing->update(['status' => 'void']);
+
+        return redirect()->route('billings.show', $billing)
+            ->with('success', 'Billing has been voided successfully.');
+    }
+
+    /**
      * Show the payment form for a billing.
      *
      * @param  \App\Models\Billing  $billing
@@ -489,7 +509,44 @@ class BillingController extends Controller
         $totalPaid = $billing->payments()->sum('amount');
         $remainingBalance = $billing->amount - $totalPaid;
 
-        return view('billings.payment', compact('billing', 'remainingBalance'));
+        // Generate the next OR number automatically
+        $nextOrNumber = $this->generateNextOrNumber();
+
+        return view('billings.payment', compact('billing', 'remainingBalance', 'nextOrNumber'));
+    }
+
+    /**
+     * Helper to dynamically auto-generate the next logical Official Receipt (OR) Number.
+     */
+    private function generateNextOrNumber()
+    {
+        $lastPayment = \App\Models\Payment::whereNotNull('reference_number')
+            ->where('reference_number', '!=', '')
+            ->where('reference_number', 'LIKE', 'OR-%')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if (!$lastPayment) {
+            $lastPayment = \App\Models\Payment::whereNotNull('reference_number')
+                ->where('reference_number', '!=', '')
+                ->orderBy('id', 'desc')
+                ->first();
+        }
+
+        if ($lastPayment) {
+            $lastRef = $lastPayment->reference_number;
+            if (preg_match('/^(.*?)(\d+)$/', $lastRef, $matches)) {
+                $prefix = $matches[1];
+                $numberStr = $matches[2];
+                $padding = strlen($numberStr);
+                $nextNumber = intval($numberStr) + 1;
+                return $prefix . str_pad($nextNumber, $padding, '0', STR_PAD_LEFT);
+            }
+        }
+
+        // Default fallback if no payments have ORs yet: OR-{Year}-000001
+        $nextId = (\App\Models\Payment::max('id') ?? 0) + 1;
+        return sprintf('OR-%s-%06d', date('Y'), $nextId);
     }
 
     /**
@@ -510,7 +567,7 @@ class BillingController extends Controller
         ]);
 
         // Create payment record
-        $billing->payments()->create([
+        $payment = $billing->payments()->create([
             'amount' => $validated['amount_paid'],
             'payment_date' => $validated['payment_date'],
             'payment_method' => $validated['payment_method'],
@@ -519,13 +576,16 @@ class BillingController extends Controller
             'received_by' => auth()->id(),
         ]);
 
-        // Update billing status if fully paid
+        // Update billing status if fully paid or partially paid
         $totalPaid = $billing->payments()->sum('amount');
-        if ($totalPaid >= ($billing->amount + $billing->arrears)) {
+        $totalDue = $billing->amount + $billing->arrears;
+        if ($totalPaid >= $totalDue) {
             $billing->update(['status' => 'paid']);
+        } elseif ($totalPaid > 0) {
+            $billing->update(['status' => 'partial']);
         }
 
-        return redirect()->route('billings.show', $billing)
+        return redirect()->route('billings.receipt', $payment)
             ->with('success', 'Payment processed successfully.');
     }
 
