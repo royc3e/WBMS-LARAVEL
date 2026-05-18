@@ -197,14 +197,24 @@
                     Street Address/Purok Name *
                 </label>
                 <div>
-                    <input
-                        type="text"
+                    <select
                         name="address_line_1"
                         id="address_line_1"
-                        value="{{ old('address_line_1', $consumer->address_line_1 ?? '') }}"
                         class="shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full text-sm border border-gray-300 dark:border-slate-500 rounded-md bg-white dark:bg-slate-700/70 dark:text-white px-3 py-1.5"
                         required
                     >
+                        <option value="" disabled {{ old('address_line_1', $consumer->address_line_1 ?? '') == '' ? 'selected' : '' }}>Select Purok</option>
+                        @foreach([
+                            'PROGRESSIVE' => 'PROGRESSIVE',
+                            'LOWER BAYAN' => 'LOWER BAYAN',
+                            'LIBERTAD' => 'LIBERTAD',
+                            'CIENTO DIEZ' => 'CIENTO DIEZ',
+                        ] as $value => $label)
+                            <option value="{{ $value }}" {{ old('address_line_1', $consumer->address_line_1 ?? '') == $value ? 'selected' : '' }}>
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
                     @error('address_line_1')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @enderror

@@ -245,7 +245,7 @@
                     <p class="text-amber-100 text-xs mt-1 leading-snug">Create and export reports</p>
                 </a>
 
-                <a href="{{ route('billings.generate') }}"
+                <a href="{{ route('billings.index') }}"
                     class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-600 to-purple-800 p-5 shadow-md shadow-purple-200 transition-all duration-300 hover:shadow-xl hover:shadow-purple-300 hover:-translate-y-1">
                     <div
                         class="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-white/10 group-hover:bg-white/15 transition-colors">

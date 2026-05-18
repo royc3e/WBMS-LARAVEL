@@ -398,6 +398,12 @@
         transform: translateY(-1px);
         box-shadow: 0 6px 10px -1px rgba(37, 99, 235, 0.25);
     }
+
+    .btn svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+    }
 </style>
 @endpush
 

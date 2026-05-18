@@ -66,21 +66,7 @@ class BillingController extends Controller
         return view('billings.index', compact('billings', 'search', 'status', 'month'));
     }
 
-    /**
-     * Show the billing generation options.
-     */
-    public function generate()
-    {
-        $consumerCounts = [
-            'total' => Consumer::count(),
-            'active' => Consumer::where('connection_status', 'active')->count(),
-            'inactive' => Consumer::where('connection_status', '!=', 'active')->count(),
-        ];
 
-        $defaultRate = (float) config('billing.default_rate_per_unit', 0);
-
-        return view('billings.generate', compact('consumerCounts', 'defaultRate'));
-    }
 
     /**
      * Generate billing for all active consumers (Batch Processing).
@@ -116,6 +102,18 @@ class BillingController extends Controller
             return redirect()->back()->with('error', $message);
         }
 
+        // Pre-validation to prevent duplication of generating bulk bills for this month
+        $alreadyBilledCount = Billing::where('billing_month', $billingDate)
+            ->whereIn('consumer_id', $activeConsumers->pluck('id'))
+            ->count();
+
+        if ($alreadyBilledCount > 0 && $alreadyBilledCount === $activeConsumers->count()) {
+            $message = $connectionTypeFilter
+                ? "Billing records for all active {$connectionTypeFilter} consumers have already been generated for " . Carbon::parse($billingDate)->format('F Y') . "."
+                : "Billing records for all active consumers have already been generated for " . Carbon::parse($billingDate)->format('F Y') . ".";
+            return redirect()->back()->with('error', $message . " Duplicate generation is not allowed.");
+        }
+
         $created = 0;
         $skipped = 0;
         $skipReasons = [];
@@ -148,20 +146,34 @@ class BillingController extends Controller
                     continue; // Skip if already billed for this month
                 }
 
-                // Get latest billing for previous reading
-                $latestBilling = $consumer->billings()->latest('billing_month')->first();
+                // Get unpaid billings (including partial) to calculate arrears
+                $unpaidBillings = $consumer->billings()
+                    ->whereIn('status', ['pending', 'overdue', 'partial'])
+                    ->with('payments')
+                    ->get();
 
-                // Calculate previous balance (unpaid amount from previous billings)
-                $previousBalance = $consumer->billings()
-                    ->whereIn('status', ['pending', 'overdue'])
-                    ->sum('amount');
+                $previousBalance = 0;
+                foreach ($unpaidBillings as $unpaidBill) {
+                    $totalPaidForBill = $unpaidBill->payments->sum('amount');
+                    $remaining = $unpaidBill->amount + $unpaidBill->arrears - $totalPaidForBill;
+                    if ($remaining > 0) {
+                        $previousBalance += $remaining;
+                    }
+                    
+                    // Close old bill as forwarded to keep the ledger clean
+                    $unpaidBill->update([
+                        'status' => 'paid',
+                        'notes' => $unpaidBill->notes . ' [Balance forwarded to next bill as arrears]'
+                    ]);
+                }
 
                 // Get readings - use meter reading if exists, otherwise simulate
                 if ($latestMeterReading) {
-                    $previousReading = $latestBilling?->current_reading ?? 0;
+                    $previousReading = $latestMeterReading->previous_reading ?? 0;
                     $currentReading = $latestMeterReading->current_reading;
                 } else {
                     // Fallback to simulation if no meter readings exist
+                    $latestBilling = $consumer->billings()->latest('billing_month')->first();
                     $previousReading = $latestBilling?->current_reading ?? 0;
                     $currentReading = $previousReading + rand(5, 30);
                 }
@@ -176,7 +188,7 @@ class BillingController extends Controller
 
                 // Calculate consumption amount using new tiered pricing
                 $consumptionAmount = $this->calculateConsumptionCharge($consumption, $consumer->connection_type);
-                $totalAmount = $consumptionAmount + $previousBalance + $penalty;
+                $totalArrears = $previousBalance + $penalty;
 
                 Billing::create([
                     'consumer_id' => $consumer->id,
@@ -184,14 +196,15 @@ class BillingController extends Controller
                     'previous_reading' => $previousReading,
                     'current_reading' => $currentReading,
                     'consumption' => $consumption,
-                    'amount' => $totalAmount,
+                    'amount' => $consumptionAmount, // Only the current consumption charge
                     'previous_balance' => $previousBalance,
                     'penalty' => $penalty,
+                    'arrears' => $totalArrears, // Forwarded balance + penalty
                     'due_date' => $dueDate,
                     'status' => 'pending',
                     'created_by' => $request->user()->id,
                     'notes' => sprintf(
-                        'Batch generated | Consumption: %.2fm³ | Charge: ₱%.2f | Type: %s | Prev Balance: ₱%.2f | Penalty: ₱%.2f',
+                        'Batch generated | Consumption: %.2fm³ | Charge: ₱%.2f | Type: %s | Arrears: ₱%.2f | Penalty: ₱%.2f',
                         $consumption,
                         $consumptionAmount,
                         ucfirst($consumer->connection_type),
@@ -265,39 +278,53 @@ class BillingController extends Controller
                 ->with('error', 'Consumer does not have a connection type set. Please update consumer details first.');
         }
 
+        // Validation to prevent duplicate individual bill generation for this month
+        $existingBilling = Billing::where('consumer_id', $consumer->id)
+            ->where('billing_month', $billingDate)
+            ->exists();
+
+        if ($existingBilling) {
+            return redirect()->back()
+                ->with('error', 'A billing record for this consumer already exists for ' . Carbon::parse($billingDate)->format('F Y') . '. Duplicate generation is not allowed.');
+        }
+
         DB::beginTransaction();
         try {
-            // Check if already billed for this month
-            $existingBilling = Billing::where('consumer_id', $consumer->id)
-                ->where('billing_month', $billingDate)
-                ->first();
-
-            if ($existingBilling) {
-                return redirect()->back()
-                    ->with('error', 'Billing for this consumer already exists for ' . Carbon::parse($billingDate)->format('F Y'));
-            }
-
             // Get the most recent meter reading for this consumer
             $latestMeterReading = DB::table('meter_readings')
                 ->where('consumer_id', $consumer->id)
                 ->orderBy('reading_date', 'desc')
                 ->first();
 
-            // Get latest billing
-            $latestBilling = $consumer->billings()->latest('billing_month')->first();
+            // Get unpaid billings (including partial) to calculate arrears
+            $unpaidBillings = $consumer->billings()
+                ->whereIn('status', ['pending', 'overdue', 'partial'])
+                ->with('payments')
+                ->get();
 
-            // Calculate previous balance
-            $previousBalance = $consumer->billings()
-                ->whereIn('status', ['pending', 'overdue'])
-                ->sum('amount');
+            $previousBalance = 0;
+            foreach ($unpaidBillings as $unpaidBill) {
+                $totalPaidForBill = $unpaidBill->payments->sum('amount');
+                $remaining = $unpaidBill->amount + $unpaidBill->arrears - $totalPaidForBill;
+                if ($remaining > 0) {
+                    $previousBalance += $remaining;
+                }
+                
+                // Close old bill as forwarded to keep the ledger clean
+                $unpaidBill->update([
+                    'status' => 'paid',
+                    'notes' => $unpaidBill->notes . ' [Balance forwarded to next bill as arrears]'
+                ]);
+            }
 
             // Get readings - use meter reading if exists, otherwise simulate
             if ($latestMeterReading) {
-                $previousReading = $latestBilling?->current_reading ?? 0;
+                $previousReading = $latestMeterReading->previous_reading ?? 0;
                 $currentReading = $latestMeterReading->current_reading;
                 $readingSource = 'meter reading';
             } else {
                 // Fallback to simulation if no meter readings exist
+                $latestBilling = $consumer->billings()->latest('billing_month')->first();
                 $previousReading = $latestBilling?->current_reading ?? 0;
                 $currentReading = $previousReading + rand(5, 30);
                 $readingSource = 'simulated';
@@ -313,7 +340,7 @@ class BillingController extends Controller
 
             // Calculate consumption amount using new tiered pricing
             $consumptionAmount = $this->calculateConsumptionCharge($consumption, $consumer->connection_type);
-            $totalAmount = $consumptionAmount + $previousBalance + $penalty;
+            $totalArrears = $previousBalance + $penalty;
 
             $billing = Billing::create([
                 'consumer_id' => $consumer->id,
@@ -321,18 +348,19 @@ class BillingController extends Controller
                 'previous_reading' => $previousReading,
                 'current_reading' => $currentReading,
                 'consumption' => $consumption,
-                'amount' => $totalAmount,
+                'amount' => $consumptionAmount, // Only the current consumption charge
                 'previous_balance' => $previousBalance,
                 'penalty' => $penalty,
+                'arrears' => $totalArrears, // Forwarded balance + penalty
                 'due_date' => $dueDate,
                 'status' => 'pending',
                 'created_by' => $request->user()->id,
                 'notes' => sprintf(
-                    'Individual | Account: %s | Consumption: %.2fm³ | Charge: ₱%.2f | Type: %s | Source: %s',
+                    'Individual | Account: %s | Consumption: %.2fm³ | Charge: ₱%.2f | Arrears: ₱%.2f | Source: %s',
                     $consumer->account_number,
                     $consumption,
                     $consumptionAmount,
-                    ucfirst($consumer->connection_type),
+                    $totalArrears,
                     $readingSource
                 ),
             ]);

@@ -27,8 +27,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Consumer routes are now in consumers.php
     Route::view('/rates-charges', 'dashboard')->name('rates.index');
 
-    Route::get('billings/generate', [BillingController::class, 'generate'])->name('billings.generate');
-
     // New dual generation system routes
     Route::post('billings/generate-all', [BillingController::class, 'generateAll'])->name('billings.generate-all');
     Route::post('billings/generate-individual', [BillingController::class, 'generateIndividual'])->name('billings.generate-individual');
