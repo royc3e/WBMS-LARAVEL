@@ -20,6 +20,8 @@ class BillingController extends Controller
      */
     public function index(Request $request)
     {
+        $this->applyOverduePenaltiesOnAccess();
+
         $search = (string) $request->input('search', '');
         $status = (string) $request->input('status', '');
         $month = (string) $request->input('month', '');
@@ -146,26 +148,16 @@ class BillingController extends Controller
                     continue; // Skip if already billed for this month
                 }
 
-                // Get unpaid billings (including partial) to calculate arrears
-                $unpaidBillings = $consumer->billings()
-                    ->whereIn('status', ['pending', 'overdue', 'partial'])
-                    ->with('payments')
-                    ->get();
-
-                $previousBalance = 0;
-                foreach ($unpaidBillings as $unpaidBill) {
-                    $totalPaidForBill = $unpaidBill->payments->sum('amount');
-                    $remaining = $unpaidBill->amount + $unpaidBill->arrears - $totalPaidForBill;
-                    if ($remaining > 0) {
-                        $previousBalance += $remaining;
-                    }
+                $totalBilled = $consumer->billings()
+                    ->where('status', '!=', 'void')
+                    ->sum(DB::raw('amount + penalty'));
                     
-                    // Close old bill as forwarded to keep the ledger clean
-                    $unpaidBill->update([
-                        'status' => 'paid',
-                        'notes' => $unpaidBill->notes . ' [Balance forwarded to next bill as arrears]'
-                    ]);
-                }
+                $totalPaid = \App\Models\Payment::whereHas('billing', function($q) use ($consumer) {
+                    $q->where('consumer_id', $consumer->id)
+                      ->where('status', '!=', 'void');
+                })->sum('amount');
+                
+                $previousBalance = max(0, $totalBilled - $totalPaid);
 
                 // Get readings - use meter reading if exists, otherwise simulate
                 if ($latestMeterReading) {
@@ -180,15 +172,8 @@ class BillingController extends Controller
 
                 $consumption = max($currentReading - $previousReading, 0);
 
-                // Calculate penalty if there's previous overdue balance
-                $penalty = 0;
-                if ($previousBalance > 0) {
-                    $penalty = $previousBalance * $penaltyRate;
-                }
-
                 // Calculate consumption amount using new tiered pricing
                 $consumptionAmount = $this->calculateConsumptionCharge($consumption, $consumer->connection_type);
-                $totalArrears = $previousBalance + $penalty;
 
                 Billing::create([
                     'consumer_id' => $consumer->id,
@@ -198,18 +183,18 @@ class BillingController extends Controller
                     'consumption' => $consumption,
                     'amount' => $consumptionAmount, // Only the current consumption charge
                     'previous_balance' => $previousBalance,
-                    'penalty' => $penalty,
-                    'arrears' => $totalArrears, // Forwarded balance + penalty
+                    'penalty' => 0,
+                    'arrears' => $previousBalance, // Forwarded balance
+
                     'due_date' => $dueDate,
                     'status' => 'pending',
                     'created_by' => $request->user()->id,
                     'notes' => sprintf(
-                        'Batch generated | Consumption: %.2fm³ | Charge: ₱%.2f | Type: %s | Arrears: ₱%.2f | Penalty: ₱%.2f',
+                        'Batch generated | Consumption: %.2fm³ | Charge: ₱%.2f | Type: %s | Arrears: ₱%.2f',
                         $consumption,
                         $consumptionAmount,
                         ucfirst($consumer->connection_type),
-                        $previousBalance,
-                        $penalty
+                        $previousBalance
                     ),
                 ]);
 
@@ -296,26 +281,16 @@ class BillingController extends Controller
                 ->orderBy('reading_date', 'desc')
                 ->first();
 
-            // Get unpaid billings (including partial) to calculate arrears
-            $unpaidBillings = $consumer->billings()
-                ->whereIn('status', ['pending', 'overdue', 'partial'])
-                ->with('payments')
-                ->get();
-
-            $previousBalance = 0;
-            foreach ($unpaidBillings as $unpaidBill) {
-                $totalPaidForBill = $unpaidBill->payments->sum('amount');
-                $remaining = $unpaidBill->amount + $unpaidBill->arrears - $totalPaidForBill;
-                if ($remaining > 0) {
-                    $previousBalance += $remaining;
-                }
+            $totalBilled = $consumer->billings()
+                ->where('status', '!=', 'void')
+                ->sum(DB::raw('amount + penalty'));
                 
-                // Close old bill as forwarded to keep the ledger clean
-                $unpaidBill->update([
-                    'status' => 'paid',
-                    'notes' => $unpaidBill->notes . ' [Balance forwarded to next bill as arrears]'
-                ]);
-            }
+            $totalPaid = \App\Models\Payment::whereHas('billing', function($q) use ($consumer) {
+                $q->where('consumer_id', $consumer->id)
+                  ->where('status', '!=', 'void');
+            })->sum('amount');
+            
+            $previousBalance = max(0, $totalBilled - $totalPaid);
 
             // Get readings - use meter reading if exists, otherwise simulate
             if ($latestMeterReading) {
@@ -332,15 +307,8 @@ class BillingController extends Controller
 
             $consumption = max($currentReading - $previousReading, 0);
 
-            // Calculate penalty
-            $penalty = 0;
-            if ($previousBalance > 0) {
-                $penalty = $previousBalance * $penaltyRate;
-            }
-
             // Calculate consumption amount using new tiered pricing
             $consumptionAmount = $this->calculateConsumptionCharge($consumption, $consumer->connection_type);
-            $totalArrears = $previousBalance + $penalty;
 
             $billing = Billing::create([
                 'consumer_id' => $consumer->id,
@@ -350,8 +318,9 @@ class BillingController extends Controller
                 'consumption' => $consumption,
                 'amount' => $consumptionAmount, // Only the current consumption charge
                 'previous_balance' => $previousBalance,
-                'penalty' => $penalty,
-                'arrears' => $totalArrears, // Forwarded balance + penalty
+                'penalty' => 0,
+                'arrears' => $previousBalance, // Forwarded balance
+
                 'due_date' => $dueDate,
                 'status' => 'pending',
                 'created_by' => $request->user()->id,
@@ -360,7 +329,7 @@ class BillingController extends Controller
                     $consumer->account_number,
                     $consumption,
                     $consumptionAmount,
-                    $totalArrears,
+                    $previousBalance,
                     $readingSource
                 ),
             ]);
@@ -437,6 +406,8 @@ class BillingController extends Controller
      */
     public function show(Billing $billing)
     {
+        $this->applyOverduePenaltiesOnAccess();
+        $billing->refresh();
         $billing->load('consumer', 'payments');
         return view('billings.show', compact('billing'));
     }
@@ -520,6 +491,7 @@ class BillingController extends Controller
         }
 
         $billing->update(['status' => 'void']);
+        $this->syncConsumerBillingStatuses($billing->consumer);
 
         return redirect()->route('billings.show', $billing)
             ->with('success', 'Billing has been voided successfully.');
@@ -533,9 +505,12 @@ class BillingController extends Controller
      */
     public function createPayment(Billing $billing)
     {
+        $this->applyOverduePenaltiesOnAccess();
+        $billing->refresh();
+        
         // Calculate the remaining balance
         $totalPaid = $billing->payments()->sum('amount');
-        $remainingBalance = $billing->amount - $totalPaid;
+        $remainingBalance = $billing->amount + $billing->arrears + $billing->penalty - $totalPaid;
 
         // Generate the next OR number automatically
         $nextOrNumber = $this->generateNextOrNumber();
@@ -604,37 +579,87 @@ class BillingController extends Controller
             'received_by' => auth()->id(),
         ]);
 
-        // Update billing status if fully paid or partially paid
-        $totalPaid = $billing->payments()->sum('amount');
-        $totalDue = $billing->amount + $billing->arrears;
-        if ($totalPaid >= $totalDue) {
-            $billing->update(['status' => 'paid']);
-        } elseif ($totalPaid > 0) {
-            $billing->update(['status' => 'partial']);
-        }
+        // Synchronize statuses of all billings for this consumer based on total payments
+        $this->syncConsumerBillingStatuses($billing->consumer);
 
-        return redirect()->route('billings.receipt', $payment)
+        return redirect()->route('billings.show', $billing)
             ->with('success', 'Payment processed successfully.');
     }
 
-    /**
-     * Display a printable billing statement.
-     */
     public function print(Billing $billing)
     {
+        $this->applyOverduePenaltiesOnAccess();
+        $billing->refresh();
         $billing->load(['consumer', 'payments.receivedBy']);
 
         return view('billings.print', compact('billing'));
     }
 
     /**
-     * Display the printable receipt for a payment.
+     * Automatically apply penalties to overdue bills on access to ensure real-time accuracy.
      */
-    public function receipt(Payment $payment)
+    private function applyOverduePenaltiesOnAccess()
     {
-        $payment->load(['billing.consumer', 'receivedBy']);
+        $graceDays = 5;
+        $penaltyRate = 0.05;
+        $targetDate = now()->subDays($graceDays)->toDateString();
 
-        return view('billings.receipt', compact('payment'));
+        // 1. Mark unpaid bills past their due date as overdue
+        Billing::whereIn('status', ['pending', 'partial'])
+            ->whereDate('due_date', '<', now()->toDateString())
+            ->update(['status' => 'overdue']);
+
+        // 2. Find overdue bills past the 5-day grace period that don't have a penalty yet
+        $overdueBillings = Billing::whereIn('status', ['pending', 'overdue', 'partial'])
+            ->whereDate('due_date', '<', $targetDate)
+            ->where('penalty', 0)
+            ->get();
+
+        foreach ($overdueBillings as $bill) {
+            $remaining = $bill->amount + $bill->arrears - $bill->total_paid;
+            if ($remaining > 0) {
+                $bill->update([
+                    'penalty' => $remaining * $penaltyRate,
+                    'status' => 'overdue',
+                    'notes' => $bill->notes . "\n[Penalty of 5% applied for overdue balance]"
+                ]);
+            }
+        }
+    }
+    /**
+     * Sync statuses of all bills for a consumer based on total payments made.
+     */
+    private function syncConsumerBillingStatuses(Consumer $consumer)
+    {
+        $billings = $consumer->billings()
+            ->where('status', '!=', 'void')
+            ->orderBy('billing_month', 'asc')
+            ->get();
+            
+        $totalPaid = \App\Models\Payment::whereHas('billing', function($q) use ($consumer) {
+            $q->where('consumer_id', $consumer->id)
+              ->where('status', '!=', 'void');
+        })->sum('amount');
+
+        $remainingPayment = $totalPaid;
+
+        foreach ($billings as $bill) {
+            $billCost = $bill->amount + $bill->penalty;
+            
+            if ($remainingPayment >= $billCost - 0.001) {
+                $status = 'paid';
+                $remainingPayment -= $billCost;
+            } elseif ($remainingPayment > 0.001) {
+                $status = 'partial';
+                $remainingPayment = 0;
+            } else {
+                $status = \Carbon\Carbon::parse($bill->due_date)->isPast() ? 'overdue' : 'pending';
+            }
+
+            if ($bill->status !== $status) {
+                $bill->update(['status' => $status]);
+            }
+        }
     }
 
     /**

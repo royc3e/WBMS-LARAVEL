@@ -88,7 +88,7 @@ class Billing extends Model
      */
     public function getBalanceAttribute(): float
     {
-        return (float) ($this->amount + $this->arrears - $this->total_paid);
+        return (float) ($this->amount + $this->arrears + $this->penalty - $this->total_paid);
     }
 
     /**

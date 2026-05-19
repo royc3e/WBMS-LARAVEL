@@ -41,7 +41,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('billings/{billing}/payments', [BillingController::class, 'processPayment'])
         ->name('billings.payment.store');
     Route::get('billings/{billing}/print', [BillingController::class, 'print'])->name('billings.print');
-    Route::get('billings/payments/{payment}/receipt', [BillingController::class, 'receipt'])->name('billings.receipt');
+
     Route::patch('billings/{billing}/cancel', [BillingController::class, 'cancel'])->name('billings.cancel');
 
     // Payment Management Routes

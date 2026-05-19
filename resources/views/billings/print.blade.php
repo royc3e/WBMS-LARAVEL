@@ -16,7 +16,7 @@
         $excessCharge = max(0.00, $amount - $minCharge);
     }
     
-    $totalAmountDue = $amount + (float) $billing->arrears;
+    $totalAmountDue = $amount + (float) $billing->arrears + (float) $billing->penalty;
     
     $orgTitle = 'MARIBULAN WSL-III';
     $orgAddress1 = 'CIENTO DIEZ, MARIBULAN';
@@ -540,8 +540,14 @@
                 </tr>
                 <tr>
                     <td class="ledger-label">Balance</td>
-                    <td class="ledger-value" style="border-bottom: 1px solid #cbd5e1;">{{ $billing->arrears > 0 ? number_format($billing->arrears, 2) : '-' }}</td>
+                    <td class="ledger-value" @if($billing->penalty <= 0) style="border-bottom: 1px solid #cbd5e1;" @endif>{{ $billing->arrears > 0 ? number_format($billing->arrears, 2) : '-' }}</td>
                 </tr>
+                @if($billing->penalty > 0)
+                <tr>
+                    <td class="ledger-label">Penalty (5%)</td>
+                    <td class="ledger-value" style="border-bottom: 1px solid #cbd5e1;">{{ number_format($billing->penalty, 2) }}</td>
+                </tr>
+                @endif
                 <tr class="ledger-row-total">
                     <td class="ledger-label">Amount Due:</td>
                     <td class="ledger-value">{{ number_format($totalAmountDue, 2) }}</td>

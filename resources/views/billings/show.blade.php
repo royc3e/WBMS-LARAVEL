@@ -238,23 +238,35 @@
                                     {{ number_format($billing->amount, 2) }}
                                 </td>
                             </tr>
-                            @if($billing->arrears > 0)
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                                    Arrears
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
-                                    {{ number_format($billing->arrears, 2) }}
-                                </td>
-                            </tr>
-                            <tr class="bg-gray-50 dark:bg-gray-700">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-white">
-                                    Total Amount Due
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900 dark:text-white">
-                                    {{ number_format($billing->amount + $billing->arrears, 2) }}
-                                </td>
-                            </tr>
+                            @if($billing->arrears > 0 || $billing->penalty > 0)
+                                @if($billing->arrears > 0)
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                        Arrears
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+                                        {{ number_format($billing->arrears, 2) }}
+                                    </td>
+                                </tr>
+                                @endif
+                                @if($billing->penalty > 0)
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                        Penalty (5%)
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+                                        {{ number_format($billing->penalty, 2) }}
+                                    </td>
+                                </tr>
+                                @endif
+                                <tr class="bg-gray-50 dark:bg-gray-700">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-white">
+                                        Total Amount Due
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900 dark:text-white">
+                                        {{ number_format($billing->amount + $billing->arrears + $billing->penalty, 2) }}
+                                    </td>
+                                </tr>
                             @endif
                             @if($billing->payments->sum('amount') > 0)
                                 <tr class="bg-green-50 dark:bg-green-900/20">
@@ -422,9 +434,7 @@
                                             <p class="text-sm font-medium text-green-600 dark:text-green-400">
                                                 {{ number_format($payment->amount, 2) }}
                                             </p>
-                                            <a href="{{ route('billings.receipt', $payment) }}" target="_blank" class="text-xs text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
-                                                View Receipt
-                                            </a>
+
                                         </div>
                                     </div>
                                 </li>
